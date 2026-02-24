@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gogma Roll Tracker</title>
+  <title>Gog Roll Tracker</title>
   <style>
     :root{
       --bg:#0b0f14; --panel:#121a24; --panel2:#0f1620; --text:#e7eef7; --muted:#9bb0c6;
@@ -163,7 +163,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Gogma Roll Tracker</h1>
+  <h1>Gog Roll Tracker</h1>
   <div class="sub">
     A glorified spreadsheet, but in browser form. Tracks rolls per weapon+element (rolls reset when you switch combo),
     and keeps everything only for this tab session (close the tab = clean slate).
@@ -181,8 +181,8 @@
           <div class="col">
             <label>Roll type</label>
             <select id="rollType">
-              <option value="skills">Weapon Skills (2 actives + set bonus + group skill)</option>
-              <option value="reinforce">Gogma Reinforcement</option>
+              <option value="skills">Weapon Skills (set bonus + group skill)</option>
+              <option value="reinforce">Gog Reinforcement</option>
             </select>
           </div>
           <div class="col">
@@ -196,14 +196,6 @@
         </div>
 
         <div class="row" id="skillsFields" style="margin-top:10px;">
-          <div class="col wide">
-            <label>Active skill 1 (optional)</label>
-            <input id="active1" placeholder="Type anything (or leave blank)" />
-          </div>
-          <div class="col wide">
-            <label>Active skill 2 (optional)</label>
-            <input id="active2" placeholder="Type anything (or leave blank)" />
-          </div>
           <div class="col">
             <label>Set bonus</label>
             <select id="setBonus"></select>
@@ -325,7 +317,7 @@
     "Blangongas Spirit","Gore Magalas Tyranny","Arkvelds Hunger","Xu Wus Vigor","Fulgur Anjanaths Will",
     "Mizutsunes Prowess","Zoh Shias Pulse","Blossomdance Prayer","Sergio’s Tenacity","Leviathans Fury",
     "Flamefete Prayer","Soul of the Dark Knight","Omega Resonance","Dreamspell Prayer",
-    "Gogmapocalypse","Lumenhymn Prayer"
+    "Gogpocalypse","Lumenhymn Prayer"
   ];
 
   const GROUP_SKILLS = [
@@ -343,7 +335,7 @@
   ];
 
   // --- Session storage keys ---
-  const KEY = "gogma_tracker_session_v1";
+  const KEY = "Gog_tracker_session_v1_1";
 
   // --- Helpers ---
   const $ = (id) => document.getElementById(id);
@@ -426,7 +418,7 @@
 
     const hay = [
       row.type, row.weapon, row.element, row.roll,
-      row.setBonus, row.groupSkill, row.active1, row.active2,
+      row.setBonus, row.groupSkill,
       row.reinforcement, row.notes
     ].filter(Boolean).join(" ").toLowerCase();
 
@@ -507,12 +499,9 @@
 
       const tdD = document.createElement("td");
       if (row.type === "skills") {
-        const a1 = row.active1 ? `<div><span class="tiny">Active 1:</span> ${escapeHtml(row.active1)}</div>` : "";
-        const a2 = row.active2 ? `<div><span class="tiny">Active 2:</span> ${escapeHtml(row.active2)}</div>` : "";
         tdD.innerHTML = `
           <div><span class="tiny">Set:</span> ${escapeHtml(row.setBonus || "-")}</div>
           <div><span class="tiny">Group:</span> ${escapeHtml(row.groupSkill || "-")}</div>
-          ${a1}${a2}
         `;
       } else {
         tdD.innerHTML = `<div>${escapeHtml(row.reinforcement || "-")}</div>`;
@@ -585,8 +574,6 @@
     };
 
     if (type === "skills") {
-      row.active1 = $("active1").value.trim();
-      row.active2 = $("active2").value.trim();
       row.setBonus = $("setBonus").value;
       row.groupSkill = $("groupSkill").value;
     } else {
@@ -596,10 +583,8 @@
     state.rows.push(row);
     saveState(state);
 
-    // Lightly clear fields that are "per-roll"
+    // Clear per-roll fields
     $("notes").value = "";
-    $("active1").value = "";
-    $("active2").value = "";
     $("setBonus").value = "";
     $("groupSkill").value = "";
     $("reinforcement").value = "";
@@ -629,7 +614,6 @@
 
     if (act === "dup") {
       const src = state.rows[idx];
-      // Duplicate but assign new id and "next roll" for that combo (since you're usually copying a pattern)
       const roll = nextRollNumber(state, src.type, src.weapon, src.element);
       const copy = { ...src, id: nowId(), createdAt: Date.now(), roll };
       state.rows.push(copy);
@@ -643,7 +627,7 @@
   $("exportBtn").addEventListener("click", () => {
     const state = loadState();
     const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-    download(`gogma-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
+    download(`Gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
   });
 
   $("importBtn").addEventListener("click", async () => {
