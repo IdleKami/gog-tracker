@@ -60,7 +60,7 @@
     }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-    select, input, textarea{
+    select, input{
       width:100%;
       padding:10px 10px;
       border-radius:12px;
@@ -69,7 +69,6 @@
       color:var(--text);
       outline:none;
     }
-    textarea{ min-height:64px; resize:vertical; }
     .col{ flex:1 1 160px; min-width:160px; }
     .col.wide{ flex:2 1 260px; min-width:240px; }
     .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
@@ -187,20 +186,6 @@
       border-bottom-color: rgba(231,76,60,.35);
     }
 
-    .footerNote{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.45;
-    }
-    .split{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-    }
-    .search{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:end;
-    }
-    .search .col{ min-width:200px; }
-
     .editBanner{
       margin-top:10px;
       padding:10px 12px;
@@ -213,6 +198,14 @@
       display:none;
     }
     .editBanner strong{ color:var(--text); }
+
+    .split{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .search{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:end;
+    }
+    .search .col{ min-width:220px; }
 
     /* Optimize panel */
     .optWrap{
@@ -228,7 +221,6 @@
       flex-wrap:wrap;
       margin-bottom:10px;
     }
-    .optTitle .pill{ margin:0; }
     .optOut{
       margin-top:10px;
       border:1px solid var(--line);
@@ -262,7 +254,7 @@
     .optOut .desc{
       color:var(--text);
       line-height:1.35;
-      max-width:740px;
+      max-width:760px;
     }
     .optOut .desc .tiny{ display:block; margin-top:4px; }
     .optOut .conflict{
@@ -285,8 +277,7 @@
 <div class="wrap">
   <h1>Gog Roll Tracker</h1>
   <div class="sub">
-    Record your rolls, mark what’s garbage (Dud) vs what you’d actually want (Fav), then generate a roll roadmap.
-    Conflicts (two favs on the same roll) get screamed at in red.
+    Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate “views” so you don’t mix timelines.
   </div>
 
   <div class="grid">
@@ -299,10 +290,10 @@
       <div class="bd">
         <div class="row">
           <div class="col">
-            <label>Roll type</label>
+            <label>View / Roll type</label>
             <select id="rollType">
-              <option value="skills">Weapon Skills (set bonus + group skill)</option>
-              <option value="reinforce">Gog Reinforcement (5 effects)</option>
+              <option value="skills">Weapon Skills seed</option>
+              <option value="reinforce">Reinforcement seed</option>
             </select>
           </div>
           <div class="col">
@@ -331,7 +322,6 @@
           </div>
         </div>
 
-        <!-- 5 reinforcement dropdowns -->
         <div id="reinforceFields" style="margin-top:10px; display:none;">
           <div class="row">
             <div class="col">
@@ -370,10 +360,6 @@
               <option value="fav">Fav</option>
             </select>
           </div>
-          <div class="col wide">
-            <label>Notes (optional)</label>
-            <textarea id="notes" placeholder="e.g. “This is the juicy roll”, “dud roll”, “for build X”"></textarea>
-          </div>
         </div>
 
         <div class="btns">
@@ -381,7 +367,6 @@
           <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
           <button class="good" id="exportBtn">Export JSON</button>
           <button id="importBtn">Import JSON</button>
-          <button class="danger" id="clearBtn">Clear session</button>
         </div>
 
         <div class="hint" id="rollHint"></div>
@@ -390,30 +375,18 @@
           <span id="kpiCombo">This combo: 0</span>
           <span id="kpiCombos">Combos: 0</span>
         </div>
-
-        <div class="footerNote">
-          Tip: Mark only what matters. Optimize uses <strong>Fav</strong> rolls as targets. Everything between becomes “burn rolls”.
-        </div>
       </div>
     </div>
 
-    <!-- RIGHT: TABLE + OPTIMIZE -->
+    <!-- RIGHT: OPTIMIZE + TABLE -->
     <div class="card">
       <div class="hd">
         <div class="split" style="width:100%;">
-          <div class="pill">Roadmap + Table</div>
+          <div class="pill" id="rightTitle">Roadmap + Table</div>
           <div class="search">
             <div class="col">
               <label>Filter (text)</label>
-              <input id="filterText" placeholder="Search: weapon, element, skill, reinforcements, notes..." />
-            </div>
-            <div class="col">
-              <label>Filter type</label>
-              <select id="filterType">
-                <option value="all">All</option>
-                <option value="skills">Weapon Skills</option>
-                <option value="reinforce">Reinforcement</option>
-              </select>
+              <input id="filterText" placeholder="Search current view..." />
             </div>
             <div class="col">
               <label>Filter mark</label>
@@ -438,19 +411,11 @@
         </div>
       </div>
 
-      <!-- Optimize panel -->
       <div class="optWrap">
         <div class="optTitle">
-          <div class="pill">Optimize Rolls</div>
+          <div class="pill" id="optPill">Optimize Rolls</div>
           <div class="row" style="margin:0;">
             <div class="col" style="min-width:220px;">
-              <label style="margin-bottom:6px;">Optimize for</label>
-              <select id="optType">
-                <option value="skills">Weapon Skills seed</option>
-                <option value="reinforce">Reinforcement seed</option>
-              </select>
-            </div>
-            <div class="col" style="min-width:200px;">
               <label style="margin-bottom:6px;">Range</label>
               <select id="optRange">
                 <option value="toMaxFav">From roll 1 → max Fav roll</option>
@@ -468,17 +433,16 @@
       </div>
 
       <div class="bd" style="padding:0;">
-        <div style="max-height:56vh; overflow:auto;">
+        <div style="max-height:62vh; overflow:auto;">
           <table>
             <thead>
               <tr>
-                <th style="width:130px;">Mark / Type</th>
+                <th style="width:150px;">Mark</th>
                 <th>Weapon</th>
                 <th>Element</th>
                 <th style="width:70px;">Roll</th>
                 <th>Details</th>
-                <th>Notes</th>
-                <th class="right" style="width:220px;">Actions</th>
+                <th class="right" style="width:210px;">Actions</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -486,8 +450,8 @@
         </div>
         <div class="bd">
           <div class="tiny">
-            Everything is stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
-            Export JSON if you ever want to keep a batch or send it to a friend.
+            Stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
+            Export JSON if you want to keep/share a batch.
           </div>
         </div>
       </div>
@@ -498,12 +462,10 @@
 
 <script>
 (() => {
-  // --- Data lists ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
   ];
-
   const ELEMENTS = ["Fire","Water","Ice","Dragon","Thunder","Paralysis","Poison","Sleep","Blast"];
 
   const SET_BONUS = [
@@ -529,10 +491,9 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // --- Storage key (bump version) ---
-  const KEY = "gog_tracker_session_v1_4";
+  // Bump version
+  const KEY = "gog_tracker_session_v1_5";
 
-  // --- Helpers ---
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -556,6 +517,15 @@
     return `${type}||${weapon}||${element}`;
   }
 
+  function rebuildCounters(state) {
+    const counters = {};
+    for (const r of state.rows) {
+      const k = comboKey(r.type, r.weapon, r.element);
+      counters[k] = Math.max(counters[k] || 0, Number(r.roll) || 0);
+    }
+    state.counters = counters;
+  }
+
   function loadState() {
     const raw = sessionStorage.getItem(KEY);
     if (!raw) return { rows: [], counters: {} };
@@ -563,7 +533,6 @@
       const parsed = JSON.parse(raw);
       if (!parsed.rows) throw new Error("bad shape");
       parsed.counters = parsed.counters || {};
-      // Normalize mark
       for (const r of parsed.rows) {
         if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
         if (!r.reinforcements) r.reinforcements = [];
@@ -577,16 +546,6 @@
 
   function saveState(state) {
     sessionStorage.setItem(KEY, JSON.stringify(state));
-  }
-
-  // Counters are derived (max roll per combo). Safer after deletes/renumbers.
-  function rebuildCounters(state) {
-    const counters = {};
-    for (const r of state.rows) {
-      const k = comboKey(r.type, r.weapon, r.element);
-      counters[k] = Math.max(counters[k] || 0, Number(r.roll) || 0);
-    }
-    state.counters = counters;
   }
 
   function nextRollNumber(state, type, weapon, element) {
@@ -650,7 +609,7 @@
     setReinforcementSelections([]);
   }
 
-  // --- Edit state ---
+  // Edit state
   let editingId = null;
 
   function setEditingMode(on, row=null) {
@@ -675,7 +634,6 @@
   }
 
   function resetInputs() {
-    $("notes").value = "";
     $("setBonus").value = "";
     $("groupSkill").value = "";
     clearReinforcementSelections();
@@ -690,7 +648,6 @@
     $("skillsFields").style.display = (row.type === "skills") ? "" : "none";
     $("reinforceFields").style.display = (row.type === "reinforce") ? "" : "none";
 
-    $("notes").value = row.notes || "";
     $("mark").value = row.mark || "";
 
     if (row.type === "skills") {
@@ -702,9 +659,11 @@
       $("groupSkill").value = "";
       setReinforcementSelections(row.reinforcements || []);
     }
+
+    // Keep right-side view synced
+    syncRightSideToType(row.type);
   }
 
-  // --- Delete with roll-collapse in same combo ---
   function deleteRowAndCollapse(state, targetRow) {
     state.rows = state.rows.filter(r => r.id !== targetRow.id);
     const k = comboKey(targetRow.type, targetRow.weapon, targetRow.element);
@@ -717,7 +676,7 @@
     rebuildCounters(state);
   }
 
-  // --- Conflict detection for a given type (skills vs reinforce) ---
+  // Conflicts for a given type
   function computeFavConflicts(state, type) {
     const byRoll = new Map(); // roll -> array rows
     for (const r of state.rows) {
@@ -738,11 +697,10 @@
     return { byRoll, conflictRolls, conflictIds };
   }
 
-  // --- Optimize logic ---
+  // Optimize
   function buildOptimizePlan(state, type, rangeMode) {
-    const { byRoll, conflictRolls } = computeFavConflicts(state, type);
+    const { byRoll } = computeFavConflicts(state, type);
 
-    // Determine range
     let maxRoll = 0;
     if (rangeMode === "toMaxSeen") {
       for (const r of state.rows) {
@@ -750,15 +708,11 @@
         maxRoll = Math.max(maxRoll, Number(r.roll) || 0);
       }
     } else {
-      // toMaxFav
       for (const [roll] of byRoll.entries()) maxRoll = Math.max(maxRoll, roll);
     }
 
-    if (maxRoll <= 0) {
-      return { maxRoll: 0, lines: [], conflicts: 0, favCount: 0 };
-    }
+    if (maxRoll <= 0) return { maxRoll: 0, lines: [], conflicts: 0, favCount: 0 };
 
-    // Count favs
     let favCount = 0;
     for (const arr of byRoll.values()) favCount += arr.length;
 
@@ -767,26 +721,13 @@
 
     for (let roll = 1; roll <= maxRoll; roll++) {
       const favs = byRoll.get(roll) || [];
-      if (favs.length === 0) {
-        lines.push({
-          roll,
-          kind: "dud",
-          conflict: false,
-          content: `Dud (burn this roll anywhere)`
-        });
-        continue;
+      if (!favs.length) {
+        lines.push({ roll, kind:"dud", conflict:false });
+      } else {
+        const conflict = favs.length > 1;
+        if (conflict) conflicts++;
+        lines.push({ roll, kind:"fav", conflict, favs });
       }
-
-      const conflict = favs.length > 1;
-      if (conflict) conflicts++;
-
-      // Build rich info
-      lines.push({
-        roll,
-        kind: "fav",
-        conflict,
-        favs
-      });
     }
 
     return { maxRoll, lines, conflicts, favCount };
@@ -794,18 +735,16 @@
 
   function describeRow(r) {
     if (r.type === "skills") {
-      return `${r.weapon} / ${r.element} / Skills — Set: ${r.setBonus || "-"}, Group: ${r.groupSkill || "-"}`;
+      return `${r.weapon} / ${r.element} — Set: ${r.setBonus || "-"}, Group: ${r.groupSkill || "-"}`;
     }
     const list = (r.reinforcements || []);
     const reinf = list.length ? list.join(", ") : "-";
-    return `${r.weapon} / ${r.element} / Reinf — ${reinf}`;
+    return `${r.weapon} / ${r.element} — ${reinf}`;
   }
 
-  // --- Filters & sorting ---
-  function matchesFilter(row, filterText, filterType, filterMark) {
-    const t = (filterText || "").trim().toLowerCase();
-
-    if (filterType !== "all" && row.type !== filterType) return false;
+  // Filters & sorting (current view only)
+  function matchesFilter(row, currentType, filterText, filterMark) {
+    if (row.type !== currentType) return false;
 
     if (filterMark !== "all") {
       if (filterMark === "fav" && row.mark !== "fav") return false;
@@ -813,13 +752,13 @@
       if (filterMark === "unmarked" && (row.mark === "fav" || row.mark === "dud")) return false;
     }
 
+    const t = (filterText || "").trim().toLowerCase();
     if (!t) return true;
 
     const reinfText = (row.reinforcements || []).join(" ");
     const hay = [
-      row.mark, row.type, row.weapon, row.element, row.roll,
-      row.setBonus, row.groupSkill,
-      reinfText, row.notes
+      row.mark, row.weapon, row.element, row.roll,
+      row.setBonus, row.groupSkill, reinfText
     ].filter(Boolean).join(" ").toLowerCase();
 
     return hay.includes(t);
@@ -835,12 +774,12 @@
 
     if (mode === "weapon") {
       return copy.sort((a,b) =>
-        cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpStr(a.type,b.type) || cmpNum(a.roll,b.roll)
+        cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpNum(a.roll,b.roll)
       );
     }
     if (mode === "element") {
       return copy.sort((a,b) =>
-        cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpStr(a.type,b.type) || cmpNum(a.roll,b.roll)
+        cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpNum(a.roll,b.roll)
       );
     }
     if (mode === "roll") {
@@ -849,37 +788,55 @@
     return copy;
   }
 
-  // --- Render ---
+  function syncRightSideToType(type) {
+    // Titles + placeholders (UX clarity)
+    $("rightTitle").textContent = (type === "skills")
+      ? "Skills Seed — Roadmap + Table"
+      : "Reinforcement Seed — Roadmap + Table";
+
+    $("optPill").textContent = (type === "skills")
+      ? "Optimize Skills Rolls"
+      : "Optimize Reinforcement Rolls";
+
+    $("filterText").placeholder = (type === "skills")
+      ? "Search skills view..."
+      : "Search reinforcement view...";
+
+    // Clear optimize output when switching views (avoids “wrong seed” confusion)
+    $("optOut").style.display = "none";
+    $("optOut").innerHTML = "";
+    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+  }
+
+  // Render
   function render() {
     const state = loadState();
 
-    const type = $("rollType").value;
+    const viewType = $("rollType").value;
     const weapon = $("weapon").value;
     const element = $("element").value;
 
-    const comboCount = currentComboCount(state, type, weapon, element);
+    const comboCount = currentComboCount(state, viewType, weapon, element);
     $("kpiTotal").textContent = `Total: ${state.rows.length}`;
     $("kpiCombo").textContent = `This combo: ${comboCount}`;
     $("kpiCombos").textContent = `Combos: ${uniqueComboCount(state)}`;
 
     const hint = editingId
       ? `Editing mode: press “Save edit” when you're done.`
-      : (type === "skills"
+      : (viewType === "skills"
         ? `Next roll for ${weapon} (${element}) Skills will be roll #${comboCount + 1}.`
         : `Next roll for ${weapon} (${element}) Reinf will be roll #${comboCount + 1}.`);
     $("rollHint").textContent = hint;
 
-    // Conflicts for BOTH types (so table highlight works regardless of optType)
-    const confSkills = computeFavConflicts(state, "skills");
-    const confReinf  = computeFavConflicts(state, "reinforce");
-    const conflictIdsAll = new Set([...confSkills.conflictIds, ...confReinf.conflictIds]);
+    // Conflicts only for current view type
+    const conflicts = computeFavConflicts(state, viewType);
+    const conflictIds = conflicts.conflictIds;
 
     const fText = $("filterText").value;
-    const fType = $("filterType").value;
     const fMark = $("filterMark").value;
     const sMode = $("sortMode").value;
 
-    const filtered = state.rows.filter(r => matchesFilter(r, fText, fType, fMark));
+    const filtered = state.rows.filter(r => matchesFilter(r, viewType, fText, fMark));
     const sorted = sortRows(filtered, sMode);
 
     const tbody = $("tbody");
@@ -887,18 +844,14 @@
 
     for (const row of sorted) {
       const tr = document.createElement("tr");
-      if (conflictIdsAll.has(row.id) && row.mark === "fav") tr.className = "conflictRow";
+      if (conflictIds.has(row.id) && row.mark === "fav") tr.className = "conflictRow";
 
-      const tdMarkType = document.createElement("td");
+      const tdMark = document.createElement("td");
       const markBadge = row.mark === "fav"
         ? `<span class="badge fav">Fav</span>`
         : (row.mark === "dud" ? `<span class="badge dud">Dud</span>` : `<span class="badge">(unmarked)</span>`);
-      const typeBadge = row.type === "skills"
-        ? `<span class="tag">Skills</span>`
-        : `<span class="tag">Reinf</span>`;
-
-      tdMarkType.innerHTML = `${markBadge} ${typeBadge}`;
-      tr.appendChild(tdMarkType);
+      tdMark.innerHTML = `${markBadge}`;
+      tr.appendChild(tdMark);
 
       const tdW = document.createElement("td");
       tdW.textContent = row.weapon;
@@ -926,10 +879,6 @@
       }
       tr.appendChild(tdD);
 
-      const tdN = document.createElement("td");
-      tdN.textContent = row.notes || "";
-      tr.appendChild(tdN);
-
       const tdA = document.createElement("td");
       tdA.className = "right";
       tdA.innerHTML = `
@@ -938,7 +887,6 @@
           <button class="ghost" data-act="mark-dud" data-id="${row.id}" title="Mark as Dud">Dud</button>
           <button class="ghost" data-act="mark-clear" data-id="${row.id}" title="Clear mark">Clear</button>
           <button data-act="edit" data-id="${row.id}" title="Edit">Edit</button>
-          <button data-act="dup" data-id="${row.id}" title="Duplicate">Dup</button>
           <button class="danger" data-act="del" data-id="${row.id}" title="Delete">Del</button>
         </div>
       `;
@@ -947,9 +895,8 @@
       tbody.appendChild(tr);
     }
 
-    // Refresh optimize summary (light)
-    const optType = $("optType").value;
-    const plan = buildOptimizePlan(state, optType, $("optRange").value);
+    // Light optimize summary for current view
+    const plan = buildOptimizePlan(state, viewType, $("optRange").value);
     if (plan.maxRoll <= 0) {
       $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
     } else {
@@ -959,7 +906,7 @@
     }
   }
 
-  // --- Init UI lists ---
+  // Init UI lists
   makeOptions($("weapon"), WEAPONS);
   makeOptions($("element"), ELEMENTS);
   makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
@@ -968,20 +915,21 @@
     makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
   });
 
-  // Session id label (vibes)
+  // Session id label
   const sessionId = nowId().slice(0,8);
   $("sessionPill").textContent = `Session: ${sessionId}`;
 
-  // Toggle fields on type change
+  // Toggle fields on rollType change AND switch table view
   $("rollType").addEventListener("change", () => {
     const t = $("rollType").value;
     $("skillsFields").style.display = (t === "skills") ? "" : "none";
     $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+    syncRightSideToType(t);
     render();
   });
 
-  // Rerender on combo/filter changes
-  ["weapon","element","filterText","filterType","filterMark","sortMode","optType","optRange"].forEach(id => {
+  // Rerender on filters/sort/range
+  ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
     $(id).addEventListener("input", render);
     $(id).addEventListener("change", render);
   });
@@ -999,7 +947,6 @@
       }
 
       const row = state.rows[idx];
-      row.notes = $("notes").value.trim();
       row.mark = ($("mark").value === "fav" || $("mark").value === "dud") ? $("mark").value : "";
 
       if (row.type === "skills") {
@@ -1029,15 +976,17 @@
       id: nowId(),
       createdAt: Date.now(),
       type, weapon, element, roll,
-      notes: $("notes").value.trim(),
       mark: ($("mark").value === "fav" || $("mark").value === "dud") ? $("mark").value : ""
     };
 
     if (type === "skills") {
       row.setBonus = $("setBonus").value;
       row.groupSkill = $("groupSkill").value;
+      row.reinforcements = [];
     } else {
       row.reinforcements = getReinforcementSelections();
+      row.setBonus = "";
+      row.groupSkill = "";
     }
 
     state.rows.push(row);
@@ -1069,24 +1018,9 @@
 
     const row = state.rows[idx];
 
-    if (act === "mark-fav") {
-      row.mark = "fav";
-      saveState(state);
-      render();
-      return;
-    }
-    if (act === "mark-dud") {
-      row.mark = "dud";
-      saveState(state);
-      render();
-      return;
-    }
-    if (act === "mark-clear") {
-      row.mark = "";
-      saveState(state);
-      render();
-      return;
-    }
+    if (act === "mark-fav") { row.mark = "fav"; saveState(state); render(); return; }
+    if (act === "mark-dud") { row.mark = "dud"; saveState(state); render(); return; }
+    if (act === "mark-clear") { row.mark = ""; saveState(state); render(); return; }
 
     if (act === "edit") {
       populateFormFromRow(row);
@@ -1105,26 +1039,12 @@
       render();
       return;
     }
-
-    if (act === "dup") {
-      const roll = nextRollNumber(state, row.type, row.weapon, row.element);
-      const copy = {
-        ...row,
-        id: nowId(),
-        createdAt: Date.now(),
-        roll
-      };
-      state.rows.push(copy);
-      saveState(state);
-      render();
-      return;
-    }
   });
 
-  // Optimize buttons
+  // Optimize buttons (current view type)
   $("optBtn").addEventListener("click", () => {
     const state = loadState();
-    const type = $("optType").value;
+    const type = $("rollType").value;
     const rangeMode = $("optRange").value;
 
     const plan = buildOptimizePlan(state, type, rangeMode);
@@ -1139,7 +1059,7 @@
 
     out.style.display = "";
     const conflictNoun = plan.conflicts === 1 ? "conflict" : "conflicts";
-    const seedName = type === "skills" ? "Skills seed" : "Reinf seed";
+    const seedName = (type === "skills") ? "Skills seed" : "Reinf seed";
 
     $("optSummary").textContent =
       `${seedName}: Targets (Fav) ${plan.favCount} • Plan length ${plan.maxRoll}` +
@@ -1154,20 +1074,19 @@
           <div class="left">
             <div class="rollN">Roll ${line.roll}</div>
             <div class="desc">
-              <span class="badge dud">Dud</span> ${escapeHtml(line.content)}
-              <span class="tiny">Any weapon/element works — this is just advancing the seed.</span>
+              <span class="badge dud">Dud</span> Dud (burn this roll anywhere)
+              <span class="tiny">Any weapon/element works — you’re just advancing the seed.</span>
             </div>
           </div>
         `;
       } else {
-        // Fav line
         const conflictWarn = line.conflict
           ? `<span class="badge" style="border-color: rgba(231,76,60,.55); background: rgba(231,76,60,.10); color:#ffd0cb;">Conflict</span>`
           : `<span class="badge fav">Fav</span>`;
 
         const items = line.favs.map(r => `<li>${escapeHtml(describeRow(r))}</li>`).join("");
         const sub = line.conflict
-          ? `<span class="tiny">Two+ favs land on the same roll. You must pick one. (The seed only gives you one outcome per roll.)</span>`
+          ? `<span class="tiny">Two+ favs land on the same roll. You must pick one.</span>`
           : `<span class="tiny">Land here on this roll to take the target.</span>`;
 
         div.innerHTML = `
@@ -1185,7 +1104,6 @@
       out.appendChild(div);
     }
 
-    // Scroll a little into view on mobile
     out.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 
@@ -1195,7 +1113,7 @@
     $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
   });
 
-  // Export / Import / Clear
+  // Export / Import
   $("exportBtn").addEventListener("click", () => {
     const state = loadState();
     const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
@@ -1214,10 +1132,11 @@
         const parsed = JSON.parse(txt);
         if (!parsed.rows) throw new Error("Invalid file format");
 
-        // Normalize
         for (const r of parsed.rows) {
           if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
           if (!r.reinforcements) r.reinforcements = [];
+          // Remove any old notes quietly if present
+          if ("notes" in r) delete r.notes;
         }
         parsed.counters = parsed.counters || {};
         rebuildCounters(parsed);
@@ -1226,6 +1145,8 @@
 
         setEditingMode(false);
         resetInputs();
+        // Keep right side synced to current view
+        syncRightSideToType($("rollType").value);
         render();
       }catch(err){
         alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
@@ -1234,16 +1155,8 @@
     inp.click();
   });
 
-  $("clearBtn").addEventListener("click", () => {
-    if (!confirm("Clear this session? This wipes the table + roll counters for this tab.")) return;
-    sessionStorage.removeItem(KEY);
-    setEditingMode(false);
-    resetInputs();
-    $("optOut").style.display = "none";
-    $("optOut").innerHTML = "";
-    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-    render();
-  });
+  // First-time view sync
+  syncRightSideToType($("rollType").value);
 
   // First render
   render();
