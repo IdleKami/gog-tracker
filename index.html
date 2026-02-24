@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gogma Roll Tracker</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#121a24; --panel2:#0f1620; --text:#e7eef7; --muted:#9bb0c6;
+      --line:#233244; --accent:#1f81c4; --good:#2ecc71; --warn:#f1c40f; --bad:#e74c3c;
+      --radius:14px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; padding:22px;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 10% -10%, rgba(31,129,196,.35), transparent 60%),
+                  radial-gradient(900px 600px at 95% 0%, rgba(46,204,113,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    h1{ margin:0 0 10px; font-size:22px; letter-spacing:.2px; }
+    .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; line-height:1.45; }
+    .wrap{ max-width:1200px; margin:0 auto; }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+    @media(min-width: 980px){
+      .grid{ grid-template-columns: 420px 1fr; align-items:start; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 12px;
+      background: rgba(255,255,255,.02);
+      border-bottom:1px solid var(--line);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .card .bd{ padding:14px; }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(0,0,0,.25);
+    }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    select, input, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{ min-height:64px; resize:vertical; }
+    .col{ flex:1 1 160px; min-width:160px; }
+    .col.wide{ flex:2 1 260px; min-width:240px; }
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    button{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease;
+      font-weight:600;
+    }
+    button:hover{ border-color: rgba(31,129,196,.8); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(31,129,196,.18);
+      border-color: rgba(31,129,196,.55);
+    }
+    button.danger{
+      background: rgba(231,76,60,.12);
+      border-color: rgba(231,76,60,.45);
+    }
+    button.good{
+      background: rgba(46,204,113,.12);
+      border-color: rgba(46,204,113,.45);
+    }
+    .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
+    .kpi{
+      display:flex; gap:10px; flex-wrap:wrap;
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .kpi span{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      background: rgba(0,0,0,.25);
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:14px;
+    }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+      border-bottom:1px solid var(--line);
+      padding:10px 10px;
+      position:sticky; top:0;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(35,50,68,.55);
+      vertical-align:top;
+      font-size:13px;
+    }
+    tbody tr:hover td{ background: rgba(31,129,196,.06); }
+    .tiny{ font-size:12px; color:var(--muted); }
+    .actions{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .tag{
+      font-size:12px;
+      padding:4px 8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(0,0,0,.2);
+      color: var(--muted);
+      display:inline-block;
+    }
+    .mono{ font-family:var(--mono); }
+    .right{ text-align:right; }
+    .footerNote{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .split{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .search{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:end;
+    }
+    .search .col{ min-width:200px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gogma Roll Tracker</h1>
+  <div class="sub">
+    A glorified spreadsheet, but in browser form. Tracks rolls per weapon+element (rolls reset when you switch combo),
+    and keeps everything only for this tab session (close the tab = clean slate).
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: INPUTS -->
+    <div class="card">
+      <div class="hd">
+        <div class="pill">Roll input</div>
+        <div class="pill mono" id="sessionPill">Session</div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="col">
+            <label>Roll type</label>
+            <select id="rollType">
+              <option value="skills">Weapon Skills (2 actives + set bonus + group skill)</option>
+              <option value="reinforce">Gogma Reinforcement</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Weapon</label>
+            <select id="weapon"></select>
+          </div>
+          <div class="col">
+            <label>Element</label>
+            <select id="element"></select>
+          </div>
+        </div>
+
+        <div class="row" id="skillsFields" style="margin-top:10px;">
+          <div class="col wide">
+            <label>Active skill 1 (optional)</label>
+            <input id="active1" placeholder="Type anything (or leave blank)" />
+          </div>
+          <div class="col wide">
+            <label>Active skill 2 (optional)</label>
+            <input id="active2" placeholder="Type anything (or leave blank)" />
+          </div>
+          <div class="col">
+            <label>Set bonus</label>
+            <select id="setBonus"></select>
+          </div>
+          <div class="col">
+            <label>Group skill</label>
+            <select id="groupSkill"></select>
+          </div>
+        </div>
+
+        <div class="row" id="reinforceFields" style="margin-top:10px; display:none;">
+          <div class="col wide">
+            <label>Reinforcement</label>
+            <select id="reinforcement"></select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="col wide">
+            <label>Notes (optional)</label>
+            <textarea id="notes" placeholder="e.g. “This is the juicy roll”, “dud roll”, “for build X”"></textarea>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="addRollBtn">+ Add roll</button>
+          <button class="good" id="exportBtn">Export JSON</button>
+          <button id="importBtn">Import JSON</button>
+          <button class="danger" id="clearBtn">Clear session</button>
+        </div>
+
+        <div class="hint" id="rollHint"></div>
+        <div class="kpi" style="margin-top:12px;">
+          <span id="kpiTotal">Total: 0</span>
+          <span id="kpiCombo">This combo: 0</span>
+          <span id="kpiCombos">Combos: 0</span>
+        </div>
+
+        <div class="footerNote">
+          Tip: “Add roll” increments the roll number for the selected weapon+element+type only.
+          Switch weapon/element and you’ll start back at roll 1 — perfect for your quit-without-save mapping runs.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: TABLE -->
+    <div class="card">
+      <div class="hd">
+        <div class="split" style="width:100%;">
+          <div class="pill">Roll table</div>
+          <div class="search">
+            <div class="col">
+              <label>Filter (text)</label>
+              <input id="filterText" placeholder="Search: weapon, element, skill, notes..." />
+            </div>
+            <div class="col">
+              <label>Filter type</label>
+              <select id="filterType">
+                <option value="all">All</option>
+                <option value="skills">Weapon Skills</option>
+                <option value="reinforce">Reinforcement</option>
+              </select>
+            </div>
+            <div class="col">
+              <label>Sort</label>
+              <select id="sortMode">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="weapon">Weapon → Element → Roll</option>
+                <option value="element">Element → Weapon → Roll</option>
+                <option value="roll">Roll # (within combo)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bd" style="padding:0;">
+        <div style="max-height:70vh; overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:90px;">Type</th>
+                <th>Weapon</th>
+                <th>Element</th>
+                <th style="width:70px;">Roll</th>
+                <th>Details</th>
+                <th>Notes</th>
+                <th class="right" style="width:110px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="bd">
+          <div class="tiny">
+            Everything is stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
+            Export JSON if you ever want to keep a batch or send it to a friend.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  // --- Data lists (yours) ---
+  const WEAPONS = [
+    "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
+    "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
+  ];
+
+  const ELEMENTS = ["Fire","Water","Ice","Dragon","Thunder","Paralysis","Poison","Sleep","Blast"];
+
+  const SET_BONUS = [
+    "Doshagumas Might","Rey Daus Voltage","Ugh Dunas Cover","Nu Udras Mutiny","Rathalos Flare",
+    "Ebony Odogarons Power","Guardian Arkvelds Vitality","Jin Dahaads Revolt","Gravios Protection",
+    "Blangongas Spirit","Gore Magalas Tyranny","Arkvelds Hunger","Xu Wus Vigor","Fulgur Anjanaths Will",
+    "Mizutsunes Prowess","Zoh Shias Pulse","Blossomdance Prayer","Sergio’s Tenacity","Leviathans Fury",
+    "Flamefete Prayer","Soul of the Dark Knight","Omega Resonance","Dreamspell Prayer",
+    "Gogmapocalypse","Lumenhymn Prayer"
+  ];
+
+  const GROUP_SKILLS = [
+    "Scaling Prowess","Fortifying Pelt","Flexible Leathercraft","Neopteron Alert","Lords Favor",
+    "Guardians Pulse","Neopteron Camouflage","Buttery Leathercraft","Scale Layering","Alluring Pelt",
+    "Lords Fury","Guardians Protection","Imparted Wisdom","Glorys Favour","Festival Spirit",
+    "Lords Soul","Master of the Fist"
+  ];
+
+  const REINFORCEMENTS = [
+    "Attack Bonus I","Attack Bonus II","Attack Bonus III","Attack Bonus EX",
+    "Element Bonus I","Element Bonus II","Element Bonus III","Element Bonus EX",
+    "Affinity Bonus I","Affinity Bonus II","Affinity Bonus III","Affinity Bonus EX",
+    "Sharpness I","Sharpness II","Sharpness EX"
+  ];
+
+  // --- Session storage keys ---
+  const KEY = "gogma_tracker_session_v1";
+
+  // --- Helpers ---
+  const $ = (id) => document.getElementById(id);
+  const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+  function makeOptions(selectEl, list, { placeholder=null } = {}) {
+    selectEl.innerHTML = "";
+    if (placeholder) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = placeholder;
+      selectEl.appendChild(opt);
+    }
+    for (const item of list) {
+      const opt = document.createElement("option");
+      opt.value = item;
+      opt.textContent = item;
+      selectEl.appendChild(opt);
+    }
+  }
+
+  function loadState() {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) return { rows: [], counters: {} };
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.rows || !parsed.counters) throw new Error("bad shape");
+      return parsed;
+    } catch {
+      return { rows: [], counters: {} };
+    }
+  }
+
+  function saveState(state) {
+    sessionStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function comboKey(type, weapon, element) {
+    return `${type}||${weapon}||${element}`;
+  }
+
+  function nextRollNumber(state, type, weapon, element) {
+    const k = comboKey(type, weapon, element);
+    const n = (state.counters[k] || 0) + 1;
+    state.counters[k] = n;
+    return n;
+  }
+
+  function currentComboCount(state, type, weapon, element) {
+    return state.counters[comboKey(type, weapon, element)] || 0;
+  }
+
+  function uniqueComboCount(state) {
+    return Object.keys(state.counters).length;
+  }
+
+  function download(filename, text) {
+    const a = document.createElement("a");
+    a.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(text));
+    a.setAttribute("download", filename);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ""));
+      fr.onerror = reject;
+      fr.readAsText(file);
+    });
+  }
+
+  // --- Render ---
+  function matchesFilter(row, filterText, filterType) {
+    const t = (filterText || "").trim().toLowerCase();
+    if (filterType !== "all" && row.type !== filterType) return false;
+    if (!t) return true;
+
+    const hay = [
+      row.type, row.weapon, row.element, row.roll,
+      row.setBonus, row.groupSkill, row.active1, row.active2,
+      row.reinforcement, row.notes
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    return hay.includes(t);
+  }
+
+  function sortRows(rows, mode) {
+    const copy = rows.slice();
+    const cmpStr = (a,b) => String(a).localeCompare(String(b));
+    const cmpNum = (a,b) => Number(a) - Number(b);
+
+    if (mode === "oldest") return copy.sort((a,b) => cmpNum(a.createdAt, b.createdAt));
+    if (mode === "newest") return copy.sort((a,b) => cmpNum(b.createdAt, a.createdAt));
+
+    if (mode === "weapon") {
+      return copy.sort((a,b) =>
+        cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpStr(a.type,b.type) || cmpNum(a.roll,b.roll)
+      );
+    }
+    if (mode === "element") {
+      return copy.sort((a,b) =>
+        cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpStr(a.type,b.type) || cmpNum(a.roll,b.roll)
+      );
+    }
+    if (mode === "roll") {
+      return copy.sort((a,b) => cmpNum(a.roll,b.roll) || cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element));
+    }
+    return copy;
+  }
+
+  function render() {
+    const state = loadState();
+
+    const type = $("rollType").value;
+    const weapon = $("weapon").value;
+    const element = $("element").value;
+
+    const comboCount = currentComboCount(state, type, weapon, element);
+    $("kpiTotal").textContent = `Total: ${state.rows.length}`;
+    $("kpiCombo").textContent = `This combo: ${comboCount}`;
+    $("kpiCombos").textContent = `Combos: ${uniqueComboCount(state)}`;
+
+    const hint = type === "skills"
+      ? `Next roll for ${weapon} (${element}) Weapon Skills will be roll #${comboCount + 1}.`
+      : `Next roll for ${weapon} (${element}) Reinforcement will be roll #${comboCount + 1}.`;
+    $("rollHint").textContent = hint;
+
+    const fText = $("filterText").value;
+    const fType = $("filterType").value;
+    const sMode = $("sortMode").value;
+
+    const filtered = state.rows.filter(r => matchesFilter(r, fText, fType));
+    const sorted = sortRows(filtered, sMode);
+
+    const tbody = $("tbody");
+    tbody.innerHTML = "";
+
+    for (const row of sorted) {
+      const tr = document.createElement("tr");
+
+      const tdType = document.createElement("td");
+      tdType.innerHTML = row.type === "skills"
+        ? `<span class="tag">Skills</span>`
+        : `<span class="tag">Reinf</span>`;
+      tr.appendChild(tdType);
+
+      const tdW = document.createElement("td");
+      tdW.textContent = row.weapon;
+      tr.appendChild(tdW);
+
+      const tdE = document.createElement("td");
+      tdE.textContent = row.element;
+      tr.appendChild(tdE);
+
+      const tdR = document.createElement("td");
+      tdR.innerHTML = `<span class="mono">#${row.roll}</span>`;
+      tr.appendChild(tdR);
+
+      const tdD = document.createElement("td");
+      if (row.type === "skills") {
+        const a1 = row.active1 ? `<div><span class="tiny">Active 1:</span> ${escapeHtml(row.active1)}</div>` : "";
+        const a2 = row.active2 ? `<div><span class="tiny">Active 2:</span> ${escapeHtml(row.active2)}</div>` : "";
+        tdD.innerHTML = `
+          <div><span class="tiny">Set:</span> ${escapeHtml(row.setBonus || "-")}</div>
+          <div><span class="tiny">Group:</span> ${escapeHtml(row.groupSkill || "-")}</div>
+          ${a1}${a2}
+        `;
+      } else {
+        tdD.innerHTML = `<div>${escapeHtml(row.reinforcement || "-")}</div>`;
+      }
+      tr.appendChild(tdD);
+
+      const tdN = document.createElement("td");
+      tdN.textContent = row.notes || "";
+      tr.appendChild(tdN);
+
+      const tdA = document.createElement("td");
+      tdA.className = "right";
+      tdA.innerHTML = `
+        <div class="actions" style="justify-content:flex-end;">
+          <button data-act="dup" data-id="${row.id}" title="Duplicate">Dup</button>
+          <button class="danger" data-act="del" data-id="${row.id}" title="Delete">Del</button>
+        </div>
+      `;
+      tr.appendChild(tdA);
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[s]));
+  }
+
+  // --- Init UI lists ---
+  makeOptions($("weapon"), WEAPONS);
+  makeOptions($("element"), ELEMENTS);
+  makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
+  makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
+  makeOptions($("reinforcement"), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
+
+  // --- Session id label (for vibes) ---
+  const sessionId = nowId().slice(0,8);
+  $("sessionPill").textContent = `Session: ${sessionId}`;
+
+  // --- Toggle fields on type change ---
+  $("rollType").addEventListener("change", () => {
+    const t = $("rollType").value;
+    $("skillsFields").style.display = (t === "skills") ? "" : "none";
+    $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+    render();
+  });
+
+  // --- Rerender on combo changes / filter changes ---
+  ["weapon","element","filterText","filterType","sortMode"].forEach(id => {
+    $(id).addEventListener("input", render);
+    $(id).addEventListener("change", render);
+  });
+
+  // --- Add roll ---
+  $("addRollBtn").addEventListener("click", () => {
+    const state = loadState();
+    const type = $("rollType").value;
+    const weapon = $("weapon").value;
+    const element = $("element").value;
+
+    const roll = nextRollNumber(state, type, weapon, element);
+
+    const row = {
+      id: nowId(),
+      createdAt: Date.now(),
+      type, weapon, element, roll,
+      notes: $("notes").value.trim()
+    };
+
+    if (type === "skills") {
+      row.active1 = $("active1").value.trim();
+      row.active2 = $("active2").value.trim();
+      row.setBonus = $("setBonus").value;
+      row.groupSkill = $("groupSkill").value;
+    } else {
+      row.reinforcement = $("reinforcement").value;
+    }
+
+    state.rows.push(row);
+    saveState(state);
+
+    // Lightly clear fields that are "per-roll"
+    $("notes").value = "";
+    $("active1").value = "";
+    $("active2").value = "";
+    $("setBonus").value = "";
+    $("groupSkill").value = "";
+    $("reinforcement").value = "";
+
+    render();
+  });
+
+  // --- Table actions (delete / duplicate) ---
+  $("tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const act = btn.getAttribute("data-act");
+    const id = btn.getAttribute("data-id");
+    if (!act || !id) return;
+
+    const state = loadState();
+    const idx = state.rows.findIndex(r => r.id === id);
+    if (idx === -1) return;
+
+    if (act === "del") {
+      state.rows.splice(idx, 1);
+      saveState(state);
+      render();
+      return;
+    }
+
+    if (act === "dup") {
+      const src = state.rows[idx];
+      // Duplicate but assign new id and "next roll" for that combo (since you're usually copying a pattern)
+      const roll = nextRollNumber(state, src.type, src.weapon, src.element);
+      const copy = { ...src, id: nowId(), createdAt: Date.now(), roll };
+      state.rows.push(copy);
+      saveState(state);
+      render();
+      return;
+    }
+  });
+
+  // --- Export / Import / Clear ---
+  $("exportBtn").addEventListener("click", () => {
+    const state = loadState();
+    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+    download(`gogma-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
+  });
+
+  $("importBtn").addEventListener("click", async () => {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "application/json,.json";
+    inp.onchange = async () => {
+      const file = inp.files && inp.files[0];
+      if (!file) return;
+      try{
+        const txt = await readFileAsText(file);
+        const parsed = JSON.parse(txt);
+        if (!parsed.rows || !parsed.counters) throw new Error("Invalid file format");
+        sessionStorage.setItem(KEY, JSON.stringify(parsed));
+        render();
+      }catch(err){
+        alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
+      }
+    };
+    inp.click();
+  });
+
+  $("clearBtn").addEventListener("click", () => {
+    if (!confirm("Clear this session? This wipes the table + roll counters for this tab.")) return;
+    sessionStorage.removeItem(KEY);
+    render();
+  });
+
+  // First render
+  render();
+
+})();
+</script>
+</body>
+</html>
