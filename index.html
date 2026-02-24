@@ -112,11 +112,16 @@
     button.ghost{
       background: rgba(0,0,0,.15);
     }
+    button.danger{
+      background: rgba(231,76,60,.10);
+      border-color: rgba(231,76,60,.35);
+    }
     button:disabled{
       opacity:.45;
       cursor:not-allowed;
       transform:none !important;
     }
+
     .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
     .kpi{
       display:flex; gap:10px; flex-wrap:wrap;
@@ -132,7 +137,7 @@
       background: rgba(0,0,0,.25);
     }
 
-    /* TABLE: wrapper handles rounded corners + clipping; table stays overflow-visible for menus */
+    /* TABLE */
     .tableShell{
       border:1px solid var(--line);
       border-radius:14px;
@@ -282,66 +287,12 @@
       color:var(--text);
     }
 
-    /* Actions dropdown */
-    td.col-actions{ overflow:visible; }
-    .actionsWrap{
-      position:relative;
-      display:inline-flex;
-      justify-content:flex-end;
-      width:100%;
-      overflow:visible;
-    }
-    .kebab{
-      width:40px;
-      height:40px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
+    /* single edit button in table */
+    .btnSmall{
+      padding:8px 10px;
       border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.25);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:900;
-      line-height:1;
-      user-select:none;
-    }
-    .kebab:hover{ border-color: rgba(31,129,196,.8); }
-    .menu{
-      position:absolute;
-      right:0;
-      top:44px;
-      min-width:190px;
-      background: rgba(10,14,20,.98);
-      border:1px solid var(--line);
-      border-radius:14px;
-      box-shadow: var(--shadow);
-      padding:6px;
-      display:none;
-      z-index:200;
-    }
-    /* open upward variant */
-    .menu.up{
-      top:auto;
-      bottom:44px;
-    }
-    .menu button{
-      width:100%;
-      text-align:left;
-      padding:10px 10px;
-      border-radius:12px;
-      border:1px solid transparent;
-      background: transparent;
       font-weight:800;
-      color:var(--text);
-    }
-    .menu button:hover{
-      background: rgba(31,129,196,.10);
-      border-color: rgba(31,129,196,.25);
-    }
-    .menu button.danger:hover{
-      background: rgba(231,76,60,.12);
-      border-color: rgba(231,76,60,.35);
+      white-space:nowrap;
     }
 
     footer{
@@ -380,11 +331,12 @@
     th.col-weapon, td.col-weapon{ width:140px; }
     th.col-element, td.col-element{ width:110px; }
     th.col-roll, td.col-roll{ width:80px; }
-    th.col-actions, td.col-actions{ width:90px; }
+    th.col-actions, td.col-actions{ width:120px; }
     @media(max-width: 640px){
       th.col-weapon, td.col-weapon{ width:120px; }
       th.col-element, td.col-element{ width:95px; }
       th.col-mark, td.col-mark{ width:105px; }
+      th.col-actions, td.col-actions{ width:110px; }
     }
   </style>
 </head>
@@ -565,7 +517,7 @@
                     <th class="col-element">Element</th>
                     <th class="col-roll">Roll</th>
                     <th>Details</th>
-                    <th class="col-actions right">Actions</th>
+                    <th class="col-actions right">Edit</th>
                   </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
@@ -622,7 +574,7 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  const KEY = "gog_tracker_session_v1_8_menu_fix";
+  const KEY = "gog_tracker_session_v1_9_edit_only";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -724,7 +676,6 @@
     const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
     ids.forEach((id, i) => $(id).value = (list && list[i]) ? list[i] : "");
   }
-
   function clearReinf() { setReinf([]); }
 
   let editingId = null;
@@ -776,16 +727,6 @@
 
     syncViewUI(row.type);
     updateAddButtonState();
-  }
-
-  function deleteRowAndCollapse(state, targetRow) {
-    state.rows = state.rows.filter(r => r.id !== targetRow.id);
-    const k = comboKey(targetRow.type, targetRow.weapon, targetRow.element);
-    for (const r of state.rows) {
-      const rk = comboKey(r.type, r.weapon, r.element);
-      if (rk === k && Number(r.roll) > Number(targetRow.roll)) r.roll = Number(r.roll) - 1;
-    }
-    rebuildCounters(state);
   }
 
   function computeFavConflicts(state, type) {
@@ -881,11 +822,6 @@
     return copy;
   }
 
-  function closeAllMenus() {
-    document.querySelectorAll(".menu").forEach(m => m.style.display = "none");
-    document.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded","false"));
-  }
-
   function syncViewUI(type) {
     $("rightTitle").textContent = (type === "skills")
       ? "Skills Seed — Roadmap + Table"
@@ -901,7 +837,6 @@
     $("optOut").style.display = "none";
     $("optOut").innerHTML = "";
     $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-    closeAllMenus();
   }
 
   function validateInputs() {
@@ -1003,16 +938,7 @@
       const tdA = document.createElement("td");
       tdA.className = "col-actions right";
       tdA.innerHTML = `
-        <div class="actionsWrap">
-          <div class="kebab" data-act="menu" data-id="${row.id}" aria-expanded="false" title="Actions">⋯</div>
-          <div class="menu" id="menu-${row.id}">
-            <button data-act="mark-fav" data-id="${row.id}">Mark Fav</button>
-            <button data-act="mark-dud" data-id="${row.id}">Mark Dud</button>
-            <button data-act="mark-clear" data-id="${row.id}">Clear mark</button>
-            <button data-act="edit" data-id="${row.id}">Edit</button>
-            <button class="danger" data-act="del" data-id="${row.id}">Delete</button>
-          </div>
-        </div>
+        <button class="btnSmall primary" data-act="edit" data-id="${row.id}">Edit</button>
       `;
       tr.appendChild(tdA);
 
@@ -1091,14 +1017,6 @@
     }
 
     out.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  // Decide if menu should open up (near bottom of viewport OR near bottom of scroll container)
-  function shouldOpenUp(menuEl, anchorEl) {
-    const rect = anchorEl.getBoundingClientRect();
-    const approxMenuHeight = 240; // good enough; menu varies slightly
-    const spaceBelow = window.innerHeight - rect.bottom;
-    return spaceBelow < approxMenuHeight;
   }
 
   function wireEvents() {
@@ -1184,63 +1102,22 @@
       render();
     });
 
+    // Only action now is Edit (all edits happen in the left panel)
     $("tbody").addEventListener("click", (e) => {
-      const el = e.target.closest("[data-act]");
-      if (!el) return;
+      const btn = e.target.closest("button[data-act]");
+      if (!btn) return;
 
-      const act = el.getAttribute("data-act");
-      const id = el.getAttribute("data-id");
-
-      if (act === "menu") {
-        const menu = document.getElementById(`menu-${id}`);
-        const open = menu && menu.style.display === "block";
-        closeAllMenus();
-        if (menu && !open) {
-          // decide orientation
-          menu.classList.remove("up");
-          if (shouldOpenUp(menu, el)) menu.classList.add("up");
-
-          menu.style.display = "block";
-          el.setAttribute("aria-expanded","true");
-        }
-        return;
-      }
-
-      if (!id) return;
+      const act = btn.getAttribute("data-act");
+      const id = btn.getAttribute("data-id");
+      if (act !== "edit" || !id) return;
 
       const state = loadState();
-      const idx = state.rows.findIndex(r => r.id === id);
-      if (idx === -1) return;
-      const row = state.rows[idx];
+      const row = state.rows.find(r => r.id === id);
+      if (!row) return;
 
-      if (act === "mark-fav") { row.mark = "fav"; saveState(state); closeAllMenus(); render(); return; }
-      if (act === "mark-dud") { row.mark = "dud"; saveState(state); closeAllMenus(); render(); return; }
-      if (act === "mark-clear") { row.mark = ""; saveState(state); closeAllMenus(); render(); return; }
-
-      if (act === "edit") {
-        populateFormFromRow(row);
-        setEditingMode(true, row);
-        closeAllMenus();
-        render();
-        return;
-      }
-
-      if (act === "del") {
-        if (editingId === id) { setEditingMode(false); resetInputs(); }
-        deleteRowAndCollapse(state, row);
-        saveState(state);
-        closeAllMenus();
-        render();
-        return;
-      }
-    });
-
-    document.addEventListener("click", (e) => {
-      const inside = e.target.closest(".actionsWrap");
-      if (!inside) closeAllMenus();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAllMenus();
+      populateFormFromRow(row);
+      setEditingMode(true, row);
+      render();
     });
 
     $("optBtn").addEventListener("click", renderOptimize);
@@ -1300,7 +1177,6 @@
 
     $("sessionPill").textContent = `Session: ${nowId().slice(0,8)}`;
 
-    // Ensure default sort = oldest
     $("sortMode").value = "oldest";
 
     const t = $("rollType").value;
