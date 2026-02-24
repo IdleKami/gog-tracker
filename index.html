@@ -165,7 +165,7 @@
 <div class="wrap">
   <h1>Gog Roll Tracker</h1>
   <div class="sub">
-    A glorified spreadsheet, but in browser form. Tracks rolls per weapon+element (rolls reset when you switch combo),
+    A glorified spreadsheet, but in browser form. Tracks rolls per weapon+element+type (rolls reset when you switch combo),
     and keeps everything only for this tab session (close the tab = clean slate).
   </div>
 
@@ -182,7 +182,7 @@
             <label>Roll type</label>
             <select id="rollType">
               <option value="skills">Weapon Skills (set bonus + group skill)</option>
-              <option value="reinforce">Gog Reinforcement</option>
+              <option value="reinforce">Gog Reinforcement (5 effects)</option>
             </select>
           </div>
           <div class="col">
@@ -206,10 +206,33 @@
           </div>
         </div>
 
-        <div class="row" id="reinforceFields" style="margin-top:10px; display:none;">
-          <div class="col wide">
-            <label>Reinforcement</label>
-            <select id="reinforcement"></select>
+        <!-- v1.2: 5 reinforcement dropdowns -->
+        <div id="reinforceFields" style="margin-top:10px; display:none;">
+          <div class="row">
+            <div class="col">
+              <label>Reinforcement 1</label>
+              <select id="reinforcement1"></select>
+            </div>
+            <div class="col">
+              <label>Reinforcement 2</label>
+              <select id="reinforcement2"></select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div class="col">
+              <label>Reinforcement 3</label>
+              <select id="reinforcement3"></select>
+            </div>
+            <div class="col">
+              <label>Reinforcement 4</label>
+              <select id="reinforcement4"></select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div class="col">
+              <label>Reinforcement 5</label>
+              <select id="reinforcement5"></select>
+            </div>
           </div>
         </div>
 
@@ -249,7 +272,7 @@
           <div class="search">
             <div class="col">
               <label>Filter (text)</label>
-              <input id="filterText" placeholder="Search: weapon, element, skill, notes..." />
+              <input id="filterText" placeholder="Search: weapon, element, skill, reinforcements, notes..." />
             </div>
             <div class="col">
               <label>Filter type</label>
@@ -334,8 +357,8 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // --- Session storage keys ---
-  const KEY = "Gog_tracker_session_v1_1";
+  // --- Session storage key (bump version to avoid old data shape issues) ---
+  const KEY = "Gog_tracker_session_v1_2";
 
   // --- Helpers ---
   const $ = (id) => document.getElementById(id);
@@ -410,16 +433,41 @@
     });
   }
 
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[s]));
+  }
+
+  function getReinforcementSelections() {
+    return [
+      $("reinforcement1").value,
+      $("reinforcement2").value,
+      $("reinforcement3").value,
+      $("reinforcement4").value,
+      $("reinforcement5").value
+    ].filter(v => v && v.trim().length > 0);
+  }
+
+  function clearReinforcementSelections() {
+    ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+      $(id).value = "";
+    });
+  }
+
   // --- Render ---
   function matchesFilter(row, filterText, filterType) {
     const t = (filterText || "").trim().toLowerCase();
     if (filterType !== "all" && row.type !== filterType) return false;
     if (!t) return true;
 
+    const reinfText = (row.reinforcements || []).join(" ");
+
     const hay = [
       row.type, row.weapon, row.element, row.roll,
       row.setBonus, row.groupSkill,
-      row.reinforcement, row.notes
+      reinfText,
+      row.notes
     ].filter(Boolean).join(" ").toLowerCase();
 
     return hay.includes(t);
@@ -504,7 +552,14 @@
           <div><span class="tiny">Group:</span> ${escapeHtml(row.groupSkill || "-")}</div>
         `;
       } else {
-        tdD.innerHTML = `<div>${escapeHtml(row.reinforcement || "-")}</div>`;
+        const list = (row.reinforcements || []);
+        if (!list.length) {
+          tdD.innerHTML = `<div>-</div>`;
+        } else {
+          tdD.innerHTML = list.map((v,i) =>
+            `<div><span class="tiny">${i+1}:</span> ${escapeHtml(v)}</div>`
+          ).join("");
+        }
       }
       tr.appendChild(tdD);
 
@@ -526,18 +581,16 @@
     }
   }
 
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[s]));
-  }
-
   // --- Init UI lists ---
   makeOptions($("weapon"), WEAPONS);
   makeOptions($("element"), ELEMENTS);
   makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
   makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
-  makeOptions($("reinforcement"), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
+
+  // 5 dropdowns (allow blank)
+  ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+    makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
+  });
 
   // --- Session id label (for vibes) ---
   const sessionId = nowId().slice(0,8);
@@ -577,7 +630,7 @@
       row.setBonus = $("setBonus").value;
       row.groupSkill = $("groupSkill").value;
     } else {
-      row.reinforcement = $("reinforcement").value;
+      row.reinforcements = getReinforcementSelections(); // up to 5
     }
 
     state.rows.push(row);
@@ -587,7 +640,7 @@
     $("notes").value = "";
     $("setBonus").value = "";
     $("groupSkill").value = "";
-    $("reinforcement").value = "";
+    clearReinforcementSelections();
 
     render();
   });
