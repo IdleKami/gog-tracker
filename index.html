@@ -23,38 +23,29 @@
       color:var(--text);
     }
 
-    /* Header */
+    /* Header (no logo) */
     .topbar{
       max-width:1200px;
       margin:0 auto 14px;
       display:flex;
-      align-items:center;
+      align-items:flex-end;
       justify-content:space-between;
       gap:14px;
       flex-wrap:wrap;
     }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:260px;
-    }
-    .brand img{
-      height:34px;
-      width:auto;
-      display:block;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
-    }
-    .brandText h1{
-      margin:0;
-      font-size:22px;
-      letter-spacing:.2px;
-    }
-    .brandText .sub{
-      margin:4px 0 0;
+    h1{ margin:0; font-size:22px; letter-spacing:.2px; }
+    .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.45; max-width:860px; }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
       color:var(--muted);
-      font-size:13px;
-      line-height:1.45;
+      background: rgba(0,0,0,.25);
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
     }
 
     /* Layout */
@@ -83,17 +74,6 @@
       display:flex; gap:10px; align-items:center; justify-content:space-between;
     }
     .card .bd{ padding:14px; }
-    .pill{
-      font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      color:var(--muted);
-      background: rgba(0,0,0,.25);
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-    }
 
     /* Form */
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
@@ -108,7 +88,6 @@
       outline:none;
     }
     .col{ flex:1 1 160px; min-width:160px; }
-    .col.wide{ flex:2 1 260px; min-width:240px; }
     .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     button{
       border:1px solid var(--line);
@@ -117,7 +96,7 @@
       padding:10px 12px;
       border-radius:12px;
       cursor:pointer;
-      transition: transform .06s ease, border-color .15s ease, background .15s ease;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
       font-weight:600;
     }
     button:hover{ border-color: rgba(31,129,196,.8); }
@@ -134,15 +113,8 @@
       background: rgba(241,196,15,.10);
       border-color: rgba(241,196,15,.35);
     }
-    button.ghost{
-      background: rgba(0,0,0,.15);
-    }
-    button.danger{
-      background: rgba(231,76,60,.12);
-      border-color: rgba(231,76,60,.45);
-    }
     button:disabled{
-      opacity:.55;
+      opacity:.45;
       cursor:not-allowed;
       transform:none !important;
     }
@@ -152,6 +124,7 @@
       font-family:var(--mono);
       color:var(--muted);
       font-size:12px;
+      margin-top:12px;
     }
     .kpi span{
       border:1px solid var(--line);
@@ -168,6 +141,7 @@
       overflow:hidden;
       border:1px solid var(--line);
       border-radius:14px;
+      table-layout:fixed;
     }
     thead th{
       text-align:left;
@@ -177,21 +151,22 @@
       border-bottom:1px solid var(--line);
       padding:10px 10px;
       position:sticky; top:0;
+      z-index:1;
     }
     tbody td{
       padding:10px 10px;
       border-bottom:1px solid rgba(35,50,68,.55);
       vertical-align:top;
       font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     tbody tr:hover td{ background: rgba(31,129,196,.06); }
 
     .tiny{ font-size:12px; color:var(--muted); }
     .mono{ font-family:var(--mono); }
     .right{ text-align:right; }
-    .actions{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-    }
+
     .badge{
       font-size:12px;
       padding:4px 8px;
@@ -200,6 +175,7 @@
       background: rgba(0,0,0,.18);
       color: var(--muted);
       display:inline-block;
+      max-width:100%;
     }
     .badge.fav{
       border-color: rgba(46,204,113,.55);
@@ -230,7 +206,7 @@
     }
     .editBanner strong{ color:var(--text); }
 
-    /* Search + headings */
+    /* Search row */
     .split{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
     }
@@ -304,20 +280,82 @@
       color:var(--text);
     }
 
+    /* Actions dropdown (kebab) */
+    .actionsWrap{
+      position:relative;
+      display:inline-flex;
+      justify-content:flex-end;
+      width:100%;
+    }
+    .kebab{
+      width:40px;
+      height:40px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:800;
+      line-height:1;
+      user-select:none;
+    }
+    .kebab:hover{ border-color: rgba(31,129,196,.8); }
+    .menu{
+      position:absolute;
+      right:0;
+      top:44px;
+      min-width:180px;
+      background: rgba(10,14,20,.98);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      padding:6px;
+      display:none;
+      z-index:50;
+    }
+    .menu button{
+      width:100%;
+      text-align:left;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      background: transparent;
+      font-weight:700;
+    }
+    .menu button:hover{
+      background: rgba(31,129,196,.10);
+      border-color: rgba(31,129,196,.25);
+    }
+    .menu .danger:hover{
+      background: rgba(231,76,60,.12);
+      border-color: rgba(231,76,60,.35);
+    }
+
     /* Footer */
     footer{
       max-width:1200px;
-      margin:14px auto 0;
-      padding-top:14px;
+      margin:16px auto 0;
+      padding-top:16px;
       border-top:1px solid rgba(35,50,68,.55);
       color:var(--muted);
       font-size:12px;
       line-height:1.45;
       display:flex;
+      flex-direction:column;
       align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+      justify-content:center;
       gap:10px;
+      text-align:center;
+    }
+    footer img{
+      height:36px;
+      width:auto;
+      display:block;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+      opacity:.95;
     }
     footer a{
       color:var(--muted);
@@ -328,23 +366,29 @@
       color:var(--text);
       border-bottom-color: rgba(231,238,247,.55);
     }
+
+    /* Column sizing (better spacing) */
+    th.col-mark, td.col-mark{ width:120px; }
+    th.col-weapon, td.col-weapon{ width:140px; }
+    th.col-element, td.col-element{ width:110px; }
+    th.col-roll, td.col-roll{ width:80px; }
+    th.col-actions, td.col-actions{ width:90px; }
+
+    @media(max-width: 640px){
+      th.col-weapon, td.col-weapon{ width:120px; }
+      th.col-element, td.col-element{ width:90px; }
+      th.col-mark, td.col-mark{ width:110px; }
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- Brand header with your logo -->
   <div class="topbar">
-    <div class="brand">
-      <img
-        src="https://cdn-iledjic.nitrocdn.com/JlvojpVvcgHjATJNzbWXlCUCjRdUJyfe/assets/images/optimized/rev-2bf6543/idlekamidesign.co.uk/wp-content/uploads/Header-Logo.webp"
-        alt="idlekamidesign.co.uk logo"
-        loading="lazy"
-      />
-      <div class="brandText">
-        <h1>Gog Roll Tracker</h1>
-        <div class="sub">
-          Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate “views” so you don’t mix timelines.
-        </div>
+    <div>
+      <h1>Gog Roll Tracker</h1>
+      <div class="sub">
+        Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate “views” so you don’t mix timelines.
       </div>
     </div>
     <div class="pill mono" id="sessionPill">Session</div>
@@ -426,7 +470,7 @@
             <div class="col">
               <label>Mark this roll</label>
               <select id="mark">
-                <option value="">(leave unmarked)</option>
+                <option value="">Select...</option>
                 <option value="dud">Dud</option>
                 <option value="fav">Fav</option>
               </select>
@@ -434,14 +478,16 @@
           </div>
 
           <div class="btns">
-            <button class="primary" id="addRollBtn">+ Add roll</button>
+            <button class="primary" id="addRollBtn" disabled>+ Add roll</button>
             <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
             <button class="good" id="exportBtn">Export JSON</button>
             <button id="importBtn">Import JSON</button>
           </div>
 
           <div class="hint" id="rollHint"></div>
-          <div class="kpi" style="margin-top:12px;">
+          <div class="hint" id="validationHint"></div>
+
+          <div class="kpi">
             <span id="kpiTotal">Total: 0</span>
             <span id="kpiCombo">This combo: 0</span>
             <span id="kpiCombos">Combos: 0</span>
@@ -465,7 +511,6 @@
                   <option value="all">All</option>
                   <option value="fav">Fav</option>
                   <option value="dud">Dud</option>
-                  <option value="unmarked">Unmarked</option>
                 </select>
               </div>
               <div class="col">
@@ -508,12 +553,12 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width:150px;">Mark</th>
-                  <th>Weapon</th>
-                  <th>Element</th>
-                  <th style="width:70px;">Roll</th>
+                  <th class="col-mark">Mark</th>
+                  <th class="col-weapon">Weapon</th>
+                  <th class="col-element">Element</th>
+                  <th class="col-roll">Roll</th>
                   <th>Details</th>
-                  <th class="right" style="width:210px;">Actions</th>
+                  <th class="col-actions right">Actions</th>
                 </tr>
               </thead>
               <tbody id="tbody"></tbody>
@@ -532,6 +577,11 @@
   </div>
 
   <footer>
+    <img
+      src="https://cdn-iledjic.nitrocdn.com/JlvojpVvcgHjATJNzbWXlCUCjRdUJyfe/assets/images/optimized/rev-2bf6543/idlekamidesign.co.uk/wp-content/uploads/Footer-Logo.webp"
+      alt="idlekamidesign.co.uk"
+      loading="lazy"
+    />
     <div>© idlekamidesign.co.uk 2026</div>
     <div><a href="https://idlekamidesign.co.uk" target="_blank" rel="noopener noreferrer">idlekamidesign.co.uk</a></div>
   </footer>
@@ -567,9 +617,7 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // Bump version
-  const KEY = "gog_tracker_session_v1_5_brand";
-
+  const KEY = "gog_tracker_session_v1_6_clean";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -670,22 +718,20 @@
       $("reinforcement3").value,
       $("reinforcement4").value,
       $("reinforcement5").value
-    ].filter(v => v && v.trim().length > 0);
+    ];
   }
 
   function setReinforcementSelections(list) {
     const arr = Array.isArray(list) ? list : [];
     const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
-    ids.forEach((id, idx) => {
-      $(id).value = arr[idx] || "";
-    });
+    ids.forEach((id, idx) => { $(id).value = arr[idx] || ""; });
   }
 
   function clearReinforcementSelections() {
     setReinforcementSelections([]);
   }
 
-  // Edit state
+  // --- Edit state
   let editingId = null;
 
   function setEditingMode(on, row=null) {
@@ -700,10 +746,7 @@
     $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
 
     const banner = $("editBanner");
-    if (!lock) {
-      banner.style.display = "none";
-      return;
-    }
+    if (!lock) { banner.style.display = "none"; return; }
     banner.style.display = "";
     $("editBannerRoll").textContent = `#${row.roll}`;
     $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
@@ -737,6 +780,7 @@
     }
 
     syncRightSideToType(row.type);
+    updateAddButtonState();
   }
 
   function deleteRowAndCollapse(state, targetRow) {
@@ -751,6 +795,7 @@
     rebuildCounters(state);
   }
 
+  // --- Conflicts per view type
   function computeFavConflicts(state, type) {
     const byRoll = new Map();
     for (const r of state.rows) {
@@ -771,6 +816,7 @@
     return { byRoll, conflictIds, conflicts };
   }
 
+  // --- Optimize
   function buildOptimizePlan(state, type, rangeMode) {
     const { byRoll, conflicts } = computeFavConflicts(state, type);
 
@@ -808,13 +854,13 @@
     return `${r.weapon} / ${r.element} — ${reinf}`;
   }
 
+  // --- Filtering/sorting (current view only)
   function matchesFilter(row, currentType, filterText, filterMark) {
     if (row.type !== currentType) return false;
 
     if (filterMark !== "all") {
       if (filterMark === "fav" && row.mark !== "fav") return false;
       if (filterMark === "dud" && row.mark !== "dud") return false;
-      if (filterMark === "unmarked" && (row.mark === "fav" || row.mark === "dud")) return false;
     }
 
     const t = (filterText || "").trim().toLowerCase();
@@ -836,7 +882,6 @@
 
     if (mode === "oldest") return copy.sort((a,b) => cmpNum(a.createdAt, b.createdAt));
     if (mode === "newest") return copy.sort((a,b) => cmpNum(b.createdAt, a.createdAt));
-
     if (mode === "weapon") return copy.sort((a,b) =>
       cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpNum(a.roll,b.roll)
     );
@@ -867,8 +912,44 @@
     $("optOut").style.display = "none";
     $("optOut").innerHTML = "";
     $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+
+    closeAllMenus();
   }
 
+  // --- Validation: must pick required + mark (dud/fav)
+  function validateInputs() {
+    const type = $("rollType").value;
+    const mark = $("mark").value;
+
+    if (mark !== "dud" && mark !== "fav") {
+      return { ok:false, msg:"Select Dud or Fav to record the roll." };
+    }
+
+    if (type === "skills") {
+      if (!$("setBonus").value) return { ok:false, msg:"Select a Set bonus." };
+      if (!$("groupSkill").value) return { ok:false, msg:"Select a Group skill." };
+      return { ok:true, msg:"" };
+    } else {
+      const picks = getReinforcementSelections();
+      // Require all 5 (no blanks)
+      if (picks.some(v => !v)) return { ok:false, msg:"Select all 5 Reinforcements." };
+      return { ok:true, msg:"" };
+    }
+  }
+
+  function updateAddButtonState() {
+    const v = validateInputs();
+    $("addRollBtn").disabled = !v.ok;
+    $("validationHint").textContent = v.ok ? "" : v.msg;
+  }
+
+  // --- Actions menus
+  function closeAllMenus() {
+    document.querySelectorAll(".menu").forEach(m => m.style.display = "none");
+    document.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded","false"));
+  }
+
+  // --- Render
   function render() {
     const state = loadState();
 
@@ -887,7 +968,7 @@
         ? `Next roll for ${weapon} (${element}) Skills will be roll #${comboCount + 1}.`
         : `Next roll for ${weapon} (${element}) Reinf will be roll #${comboCount + 1}.`);
 
-    const { conflictIds, conflicts } = computeFavConflicts(state, viewType);
+    const { conflictIds } = computeFavConflicts(state, viewType);
 
     const fText = $("filterText").value;
     const fMark = $("filterMark").value;
@@ -904,20 +985,25 @@
       if (conflictIds.has(row.id) && row.mark === "fav") tr.className = "conflictRow";
 
       const tdMark = document.createElement("td");
-      tdMark.innerHTML = row.mark === "fav"
-        ? `<span class="badge fav">Fav</span>`
-        : (row.mark === "dud" ? `<span class="badge dud">Dud</span>` : `<span class="badge">(unmarked)</span>`);
+      tdMark.className = "col-mark";
+      tdMark.innerHTML =
+        row.mark === "fav" ? `<span class="badge fav">Fav</span>` :
+        row.mark === "dud" ? `<span class="badge dud">Dud</span>` :
+        `<span class="badge">(unmarked)</span>`;
       tr.appendChild(tdMark);
 
       const tdW = document.createElement("td");
+      tdW.className = "col-weapon";
       tdW.textContent = row.weapon;
       tr.appendChild(tdW);
 
       const tdE = document.createElement("td");
+      tdE.className = "col-element";
       tdE.textContent = row.element;
       tr.appendChild(tdE);
 
       const tdR = document.createElement("td");
+      tdR.className = "col-roll";
       tdR.innerHTML = `<span class="mono">#${row.roll}</span>`;
       tr.appendChild(tdR);
 
@@ -936,14 +1022,17 @@
       tr.appendChild(tdD);
 
       const tdA = document.createElement("td");
-      tdA.className = "right";
+      tdA.className = "col-actions right";
       tdA.innerHTML = `
-        <div class="actions" style="justify-content:flex-end;">
-          <button class="ghost" data-act="mark-fav" data-id="${row.id}">Fav</button>
-          <button class="ghost" data-act="mark-dud" data-id="${row.id}">Dud</button>
-          <button class="ghost" data-act="mark-clear" data-id="${row.id}">Clear</button>
-          <button data-act="edit" data-id="${row.id}">Edit</button>
-          <button class="danger" data-act="del" data-id="${row.id}">Del</button>
+        <div class="actionsWrap">
+          <div class="kebab" data-act="menu" data-id="${row.id}" aria-expanded="false" title="Actions">⋯</div>
+          <div class="menu" id="menu-${row.id}">
+            <button data-act="mark-fav" data-id="${row.id}">Mark Fav</button>
+            <button data-act="mark-dud" data-id="${row.id}">Mark Dud</button>
+            <button data-act="mark-clear" data-id="${row.id}">Clear mark</button>
+            <button data-act="edit" data-id="${row.id}">Edit</button>
+            <button class="danger" data-act="del" data-id="${row.id}">Delete</button>
+          </div>
         </div>
       `;
       tr.appendChild(tdA);
@@ -958,9 +1047,11 @@
       const conflictsTxt = plan.conflicts ? ` • Conflicts: ${plan.conflicts}` : "";
       $("optSummary").textContent = `Targets (Fav): ${plan.favCount} • Plan length: ${plan.maxRoll}${conflictsTxt}`;
     }
+
+    updateAddButtonState();
   }
 
-  // Init selects
+  // --- Init selects
   makeOptions($("weapon"), WEAPONS);
   makeOptions($("element"), ELEMENTS);
   makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
@@ -982,6 +1073,12 @@
     render();
   });
 
+  // Validation triggers
+  ["mark","setBonus","groupSkill","reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+    $(id).addEventListener("change", updateAddButtonState);
+    $(id).addEventListener("input", updateAddButtonState);
+  });
+
   // Rerender triggers
   ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
     $(id).addEventListener("input", render);
@@ -990,6 +1087,9 @@
 
   // Add roll / Save edit
   $("addRollBtn").addEventListener("click", () => {
+    const v = validateInputs();
+    if (!v.ok) { updateAddButtonState(); return; }
+
     const state = loadState();
 
     if (editingId) {
@@ -997,13 +1097,13 @@
       if (idx === -1) { setEditingMode(false); render(); return; }
 
       const row = state.rows[idx];
-      row.mark = ($("mark").value === "fav" || $("mark").value === "dud") ? $("mark").value : "";
+      row.mark = $("mark").value;
 
       if (row.type === "skills") {
         row.setBonus = $("setBonus").value;
         row.groupSkill = $("groupSkill").value;
       } else {
-        row.reinforcements = getReinforcementSelections();
+        row.reinforcements = getReinforcementSelections().slice();
       }
 
       rebuildCounters(state);
@@ -1024,7 +1124,7 @@
       id: nowId(),
       createdAt: Date.now(),
       type, weapon, element, roll,
-      mark: ($("mark").value === "fav" || $("mark").value === "dud") ? $("mark").value : ""
+      mark: $("mark").value
     };
 
     if (type === "skills") {
@@ -1032,7 +1132,7 @@
       row.groupSkill = $("groupSkill").value;
       row.reinforcements = [];
     } else {
-      row.reinforcements = getReinforcementSelections();
+      row.reinforcements = getReinforcementSelections().slice();
       row.setBonus = "";
       row.groupSkill = "";
     }
@@ -1051,27 +1151,41 @@
     render();
   });
 
-  // Table actions
+  // Table actions (menus + actions)
   $("tbody").addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
+    const el = e.target.closest("[data-act]");
+    if (!el) return;
 
-    const act = btn.getAttribute("data-act");
-    const id = btn.getAttribute("data-id");
-    if (!act || !id) return;
+    const act = el.getAttribute("data-act");
+    const id = el.getAttribute("data-id");
+
+    if (act === "menu") {
+      // Toggle the menu
+      const menu = document.getElementById(`menu-${id}`);
+      const open = menu && menu.style.display === "block";
+      closeAllMenus();
+      if (menu && !open) {
+        menu.style.display = "block";
+        el.setAttribute("aria-expanded","true");
+      }
+      return;
+    }
+
+    if (!id) return;
 
     const state = loadState();
     const idx = state.rows.findIndex(r => r.id === id);
     if (idx === -1) return;
     const row = state.rows[idx];
 
-    if (act === "mark-fav") { row.mark = "fav"; saveState(state); render(); return; }
-    if (act === "mark-dud") { row.mark = "dud"; saveState(state); render(); return; }
-    if (act === "mark-clear") { row.mark = ""; saveState(state); render(); return; }
+    if (act === "mark-fav") { row.mark = "fav"; saveState(state); closeAllMenus(); render(); return; }
+    if (act === "mark-dud") { row.mark = "dud"; saveState(state); closeAllMenus(); render(); return; }
+    if (act === "mark-clear") { row.mark = ""; saveState(state); closeAllMenus(); render(); return; }
 
     if (act === "edit") {
       populateFormFromRow(row);
       setEditingMode(true, row);
+      closeAllMenus();
       render();
       return;
     }
@@ -1080,9 +1194,19 @@
       if (editingId === id) { setEditingMode(false); resetInputs(); }
       deleteRowAndCollapse(state, row);
       saveState(state);
+      closeAllMenus();
       render();
       return;
     }
+  });
+
+  // Close menus when clicking elsewhere / pressing ESC
+  document.addEventListener("click", (e) => {
+    const insideMenu = e.target.closest(".actionsWrap");
+    if (!insideMenu) closeAllMenus();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllMenus();
   });
 
   // Optimize (current view)
@@ -1196,12 +1320,31 @@
     inp.click();
   });
 
-  // Start
-  function init() {
-    syncRightSideToType($("rollType").value);
+  // Init
+  makeOptions($("weapon"), WEAPONS);
+  makeOptions($("element"), ELEMENTS);
+  makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
+  makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
+  ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+    makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
+  });
+
+  const sessionId = nowId().slice(0,8);
+  $("sessionPill").textContent = `Session: ${sessionId}`;
+
+  $("rollType").addEventListener("change", () => {
+    const t = $("rollType").value;
+    $("skillsFields").style.display = (t === "skills") ? "" : "none";
+    $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+    syncRightSideToType(t);
+    updateAddButtonState();
     render();
-  }
-  init();
+  });
+
+  syncRightSideToType($("rollType").value);
+  updateAddButtonState();
+  render();
+
 })();
 </script>
 </body>
