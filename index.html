@@ -23,7 +23,6 @@
       color:var(--text);
     }
 
-    /* Header */
     .topbar{
       max-width:1200px;
       margin:0 auto 14px;
@@ -48,7 +47,6 @@
       white-space:nowrap;
     }
 
-    /* Layout */
     .wrap{ max-width:1200px; margin:0 auto; }
     .grid{
       display:grid;
@@ -59,7 +57,6 @@
       .grid{ grid-template-columns: 420px 1fr; align-items:start; }
     }
 
-    /* Cards */
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
       border:1px solid var(--line);
@@ -75,7 +72,6 @@
     }
     .card .bd{ padding:14px; }
 
-    /* Form */
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     select, input{
@@ -136,15 +132,21 @@
       background: rgba(0,0,0,.25);
     }
 
-    /* Table */
+    /* TABLE: wrapper handles rounded corners + clipping; table stays overflow-visible for menus */
+    .tableShell{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.10);
+    }
     table{
       width:100%;
       border-collapse:separate;
       border-spacing:0;
-      overflow:hidden;
-      border:1px solid var(--line);
-      border-radius:14px;
       table-layout:fixed;
+      border:none;
+      border-radius:0;
+      overflow:visible;
     }
     thead th{
       text-align:left;
@@ -195,7 +197,6 @@
       border-bottom-color: rgba(231,76,60,.35);
     }
 
-    /* Edit banner */
     .editBanner{
       margin-top:10px;
       padding:10px 12px;
@@ -209,7 +210,6 @@
     }
     .editBanner strong{ color:var(--text); }
 
-    /* Search row */
     .split{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
     }
@@ -218,7 +218,6 @@
     }
     .search .col{ min-width:220px; }
 
-    /* Optimize panel */
     .optWrap{
       padding:14px;
       border-bottom:1px solid var(--line);
@@ -284,11 +283,13 @@
     }
 
     /* Actions dropdown */
+    td.col-actions{ overflow:visible; }
     .actionsWrap{
       position:relative;
       display:inline-flex;
       justify-content:flex-end;
       width:100%;
+      overflow:visible;
     }
     .kebab{
       width:40px;
@@ -310,14 +311,19 @@
       position:absolute;
       right:0;
       top:44px;
-      min-width:180px;
+      min-width:190px;
       background: rgba(10,14,20,.98);
       border:1px solid var(--line);
       border-radius:14px;
       box-shadow: var(--shadow);
       padding:6px;
       display:none;
-      z-index:50;
+      z-index:200;
+    }
+    /* open upward variant */
+    .menu.up{
+      top:auto;
+      bottom:44px;
     }
     .menu button{
       width:100%;
@@ -327,6 +333,7 @@
       border:1px solid transparent;
       background: transparent;
       font-weight:800;
+      color:var(--text);
     }
     .menu button:hover{
       background: rgba(31,129,196,.10);
@@ -337,7 +344,6 @@
       border-color: rgba(231,76,60,.35);
     }
 
-    /* Footer */
     footer{
       max-width:1200px;
       margin:16px auto 0;
@@ -370,7 +376,6 @@
       border-bottom-color: rgba(231,238,247,.55);
     }
 
-    /* Column sizing */
     th.col-mark, td.col-mark{ width:110px; }
     th.col-weapon, td.col-weapon{ width:140px; }
     th.col-element, td.col-element{ width:110px; }
@@ -517,8 +522,8 @@
               <div class="col">
                 <label>Sort</label>
                 <select id="sortMode">
+                  <option value="oldest" selected>Oldest first</option>
                   <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
                   <option value="weapon">Weapon → Element → Roll</option>
                   <option value="element">Element → Weapon → Roll</option>
                   <option value="roll">Roll # (within combo)</option>
@@ -551,19 +556,21 @@
 
         <div class="bd" style="padding:0;">
           <div style="max-height:62vh; overflow:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th class="col-mark">Mark</th>
-                  <th class="col-weapon">Weapon</th>
-                  <th class="col-element">Element</th>
-                  <th class="col-roll">Roll</th>
-                  <th>Details</th>
-                  <th class="col-actions right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tbody"></tbody>
-            </table>
+            <div class="tableShell">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="col-mark">Mark</th>
+                    <th class="col-weapon">Weapon</th>
+                    <th class="col-element">Element</th>
+                    <th class="col-roll">Roll</th>
+                    <th>Details</th>
+                    <th class="col-actions right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
           </div>
           <div class="bd">
             <div class="tiny">
@@ -588,7 +595,6 @@
 
 <script>
 (() => {
-  // --- Lists ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
@@ -616,10 +622,7 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // --- Storage key ---
-  const KEY = "gog_tracker_session_v1_7_fixed";
-
-  // --- Helpers ---
+  const KEY = "gog_tracker_session_v1_8_menu_fix";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -639,9 +642,7 @@
     }
   }
 
-  function comboKey(type, weapon, element) {
-    return `${type}||${weapon}||${element}`;
-  }
+  function comboKey(type, weapon, element) { return `${type}||${weapon}||${element}`; }
 
   function rebuildCounters(state) {
     const counters = {};
@@ -670,9 +671,7 @@
     }
   }
 
-  function saveState(state) {
-    sessionStorage.setItem(KEY, JSON.stringify(state));
-  }
+  function saveState(state) { sessionStorage.setItem(KEY, JSON.stringify(state)); }
 
   function nextRollNumber(state, type, weapon, element) {
     const k = comboKey(type, weapon, element);
@@ -685,9 +684,7 @@
     return state.counters[comboKey(type, weapon, element)] || 0;
   }
 
-  function uniqueComboCount(state) {
-    return Object.keys(state.counters).length;
-  }
+  function uniqueComboCount(state) { return Object.keys(state.counters).length; }
 
   function download(filename, text) {
     const a = document.createElement("a");
@@ -730,7 +727,6 @@
 
   function clearReinf() { setReinf([]); }
 
-  // --- Edit state ---
   let editingId = null;
 
   function setEditingMode(on, row=null) {
@@ -745,10 +741,7 @@
     $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
 
     const banner = $("editBanner");
-    if (!lock) {
-      banner.style.display = "none";
-      return;
-    }
+    if (!lock) { banner.style.display = "none"; return; }
     banner.style.display = "";
     $("editBannerRoll").textContent = `#${row.roll}`;
     $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
@@ -790,14 +783,11 @@
     const k = comboKey(targetRow.type, targetRow.weapon, targetRow.element);
     for (const r of state.rows) {
       const rk = comboKey(r.type, r.weapon, r.element);
-      if (rk === k && Number(r.roll) > Number(targetRow.roll)) {
-        r.roll = Number(r.roll) - 1;
-      }
+      if (rk === k && Number(r.roll) > Number(targetRow.roll)) r.roll = Number(r.roll) - 1;
     }
     rebuildCounters(state);
   }
 
-  // --- Conflicts (per view/seed) ---
   function computeFavConflicts(state, type) {
     const byRoll = new Map();
     for (const r of state.rows) {
@@ -818,7 +808,6 @@
     return { byRoll, conflictIds, conflicts };
   }
 
-  // --- Optimize ---
   function buildOptimizePlan(state, type, rangeMode) {
     const { byRoll, conflicts } = computeFavConflicts(state, type);
 
@@ -853,7 +842,6 @@
     return `${r.weapon} / ${r.element} — ${list.length ? list.join(", ") : "-"}`;
   }
 
-  // --- Filters/sort (current view only) ---
   function matchesFilter(row, currentType, filterText, filterMark) {
     if (row.type !== currentType) return false;
 
@@ -893,7 +881,6 @@
     return copy;
   }
 
-  // --- View UI sync ---
   function closeAllMenus() {
     document.querySelectorAll(".menu").forEach(m => m.style.display = "none");
     document.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded","false"));
@@ -917,7 +904,6 @@
     closeAllMenus();
   }
 
-  // --- Validation gating ---
   function validateInputs() {
     const type = $("rollType").value;
     const mark = $("mark").value;
@@ -943,7 +929,6 @@
     $("validationHint").textContent = v.ok ? "" : v.msg;
   }
 
-  // --- Render ---
   function render() {
     const state = loadState();
     const viewType = $("rollType").value;
@@ -1034,7 +1019,6 @@
       tbody.appendChild(tr);
     }
 
-    // Summary preview
     const plan = buildOptimizePlan(state, viewType, $("optRange").value);
     if (plan.maxRoll <= 0) {
       $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
@@ -1046,7 +1030,6 @@
     updateAddButtonState();
   }
 
-  // --- Optimize buttons ---
   function renderOptimize() {
     const state = loadState();
     const type = $("rollType").value;
@@ -1110,9 +1093,15 @@
     out.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
-  // --- Wire events (this is what was missing/broken) ---
+  // Decide if menu should open up (near bottom of viewport OR near bottom of scroll container)
+  function shouldOpenUp(menuEl, anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    const approxMenuHeight = 240; // good enough; menu varies slightly
+    const spaceBelow = window.innerHeight - rect.bottom;
+    return spaceBelow < approxMenuHeight;
+  }
+
   function wireEvents() {
-    // Switch view
     $("rollType").addEventListener("change", () => {
       const t = $("rollType").value;
       $("skillsFields").style.display = (t === "skills") ? "" : "none";
@@ -1121,19 +1110,16 @@
       render();
     });
 
-    // Re-render triggers
     ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
       $(id).addEventListener("input", render);
       $(id).addEventListener("change", render);
     });
 
-    // Validation triggers
     ["mark","setBonus","groupSkill","reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
       $(id).addEventListener("input", updateAddButtonState);
       $(id).addEventListener("change", updateAddButtonState);
     });
 
-    // Add roll / Save edit
     $("addRollBtn").addEventListener("click", () => {
       const v = validateInputs();
       if (!v.ok) { updateAddButtonState(); return; }
@@ -1192,14 +1178,12 @@
       render();
     });
 
-    // Cancel edit
     $("cancelEditBtn").addEventListener("click", () => {
       setEditingMode(false);
       resetInputs();
       render();
     });
 
-    // Table actions + menus
     $("tbody").addEventListener("click", (e) => {
       const el = e.target.closest("[data-act]");
       if (!el) return;
@@ -1212,6 +1196,10 @@
         const open = menu && menu.style.display === "block";
         closeAllMenus();
         if (menu && !open) {
+          // decide orientation
+          menu.classList.remove("up");
+          if (shouldOpenUp(menu, el)) menu.classList.add("up");
+
           menu.style.display = "block";
           el.setAttribute("aria-expanded","true");
         }
@@ -1247,7 +1235,6 @@
       }
     });
 
-    // Close menus on outside click / ESC
     document.addEventListener("click", (e) => {
       const inside = e.target.closest(".actionsWrap");
       if (!inside) closeAllMenus();
@@ -1256,7 +1243,6 @@
       if (e.key === "Escape") closeAllMenus();
     });
 
-    // Optimize
     $("optBtn").addEventListener("click", renderOptimize);
     $("optClearBtn").addEventListener("click", () => {
       $("optOut").style.display = "none";
@@ -1264,7 +1250,6 @@
       $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
     });
 
-    // Export / Import
     $("exportBtn").addEventListener("click", () => {
       const state = loadState();
       const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
@@ -1304,7 +1289,6 @@
     });
   }
 
-  // --- Init ---
   function init() {
     makeOptions($("weapon"), WEAPONS, null);
     makeOptions($("element"), ELEMENTS, null);
@@ -1314,8 +1298,10 @@
       makeOptions($(id), REINFORCEMENTS, "Select reinforcement...");
     });
 
-    const sessionId = nowId().slice(0,8);
-    $("sessionPill").textContent = `Session: ${sessionId}`;
+    $("sessionPill").textContent = `Session: ${nowId().slice(0,8)}`;
+
+    // Ensure default sort = oldest
+    $("sortMode").value = "oldest";
 
     const t = $("rollType").value;
     $("skillsFields").style.display = (t === "skills") ? "" : "none";
