@@ -23,7 +23,7 @@
       color:var(--text);
     }
 
-    /* Header (no logo) */
+    /* Header */
     .topbar{
       max-width:1200px;
       margin:0 auto 14px;
@@ -97,7 +97,7 @@
       border-radius:12px;
       cursor:pointer;
       transition: transform .06s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
-      font-weight:600;
+      font-weight:700;
     }
     button:hover{ border-color: rgba(31,129,196,.8); }
     button:active{ transform: translateY(1px); }
@@ -112,6 +112,9 @@
     button.warn{
       background: rgba(241,196,15,.10);
       border-color: rgba(241,196,15,.35);
+    }
+    button.ghost{
+      background: rgba(0,0,0,.15);
     }
     button:disabled{
       opacity:.45;
@@ -280,7 +283,7 @@
       color:var(--text);
     }
 
-    /* Actions dropdown (kebab) */
+    /* Actions dropdown */
     .actionsWrap{
       position:relative;
       display:inline-flex;
@@ -298,7 +301,7 @@
       background: rgba(0,0,0,.25);
       color:var(--text);
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
       line-height:1;
       user-select:none;
     }
@@ -323,13 +326,13 @@
       border-radius:12px;
       border:1px solid transparent;
       background: transparent;
-      font-weight:700;
+      font-weight:800;
     }
     .menu button:hover{
       background: rgba(31,129,196,.10);
       border-color: rgba(31,129,196,.25);
     }
-    .menu .danger:hover{
+    .menu button.danger:hover{
       background: rgba(231,76,60,.12);
       border-color: rgba(231,76,60,.35);
     }
@@ -367,23 +370,21 @@
       border-bottom-color: rgba(231,238,247,.55);
     }
 
-    /* Column sizing (better spacing) */
-    th.col-mark, td.col-mark{ width:120px; }
+    /* Column sizing */
+    th.col-mark, td.col-mark{ width:110px; }
     th.col-weapon, td.col-weapon{ width:140px; }
     th.col-element, td.col-element{ width:110px; }
     th.col-roll, td.col-roll{ width:80px; }
     th.col-actions, td.col-actions{ width:90px; }
-
     @media(max-width: 640px){
       th.col-weapon, td.col-weapon{ width:120px; }
-      th.col-element, td.col-element{ width:90px; }
-      th.col-mark, td.col-mark{ width:110px; }
+      th.col-element, td.col-element{ width:95px; }
+      th.col-mark, td.col-mark{ width:105px; }
     }
   </style>
 </head>
 
 <body>
-
   <div class="topbar">
     <div>
       <h1>Gog Roll Tracker</h1>
@@ -396,7 +397,7 @@
 
   <div class="wrap">
     <div class="grid">
-      <!-- LEFT: INPUTS -->
+      <!-- LEFT -->
       <div class="card">
         <div class="hd">
           <div class="pill">Roll input</div>
@@ -495,7 +496,7 @@
         </div>
       </div>
 
-      <!-- RIGHT: OPTIMIZE + TABLE -->
+      <!-- RIGHT -->
       <div class="card">
         <div class="hd">
           <div class="split" style="width:100%;">
@@ -572,7 +573,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -588,6 +588,7 @@
 
 <script>
 (() => {
+  // --- Lists ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
@@ -602,14 +603,12 @@
     "Flamefete Prayer","Soul of the Dark Knight","Omega Resonance","Dreamspell Prayer",
     "Gogmapocalypse","Lumenhymn Prayer"
   ];
-
   const GROUP_SKILLS = [
     "Scaling Prowess","Fortifying Pelt","Flexible Leathercraft","Neopteron Alert","Lords Favor",
     "Guardians Pulse","Neopteron Camouflage","Buttery Leathercraft","Scale Layering","Alluring Pelt",
     "Lords Fury","Guardians Protection","Imparted Wisdom","Glorys Favour","Festival Spirit",
     "Lords Soul","Master of the Fist"
   ];
-
   const REINFORCEMENTS = [
     "Attack Bonus I","Attack Bonus II","Attack Bonus III","Attack Bonus EX",
     "Element Bonus I","Element Bonus II","Element Bonus III","Element Bonus EX",
@@ -617,13 +616,16 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  const KEY = "gog_tracker_session_v1_6_clean";
+  // --- Storage key ---
+  const KEY = "gog_tracker_session_v1_7_fixed";
+
+  // --- Helpers ---
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-  function makeOptions(selectEl, list, { placeholder=null } = {}) {
+  function makeOptions(selectEl, list, placeholder=null) {
     selectEl.innerHTML = "";
-    if (placeholder) {
+    if (placeholder !== null) {
       const opt = document.createElement("option");
       opt.value = "";
       opt.textContent = placeholder;
@@ -655,11 +657,11 @@
     if (!raw) return { rows: [], counters: {} };
     try {
       const parsed = JSON.parse(raw);
-      if (!parsed.rows) throw new Error("bad shape");
+      if (!parsed.rows) throw new Error("bad");
       parsed.counters = parsed.counters || {};
       for (const r of parsed.rows) {
         if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
-        if (!r.reinforcements) r.reinforcements = [];
+        if (!Array.isArray(r.reinforcements)) r.reinforcements = [];
       }
       rebuildCounters(parsed);
       return parsed;
@@ -711,7 +713,7 @@
     }[s]));
   }
 
-  function getReinforcementSelections() {
+  function getReinf() {
     return [
       $("reinforcement1").value,
       $("reinforcement2").value,
@@ -721,17 +723,14 @@
     ];
   }
 
-  function setReinforcementSelections(list) {
-    const arr = Array.isArray(list) ? list : [];
+  function setReinf(list) {
     const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
-    ids.forEach((id, idx) => { $(id).value = arr[idx] || ""; });
+    ids.forEach((id, i) => $(id).value = (list && list[i]) ? list[i] : "");
   }
 
-  function clearReinforcementSelections() {
-    setReinforcementSelections([]);
-  }
+  function clearReinf() { setReinf([]); }
 
-  // --- Edit state
+  // --- Edit state ---
   let editingId = null;
 
   function setEditingMode(on, row=null) {
@@ -746,7 +745,10 @@
     $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
 
     const banner = $("editBanner");
-    if (!lock) { banner.style.display = "none"; return; }
+    if (!lock) {
+      banner.style.display = "none";
+      return;
+    }
     banner.style.display = "";
     $("editBannerRoll").textContent = `#${row.roll}`;
     $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
@@ -755,7 +757,7 @@
   function resetInputs() {
     $("setBonus").value = "";
     $("groupSkill").value = "";
-    clearReinforcementSelections();
+    clearReinf();
     $("mark").value = "";
   }
 
@@ -772,14 +774,14 @@
     if (row.type === "skills") {
       $("setBonus").value = row.setBonus || "";
       $("groupSkill").value = row.groupSkill || "";
-      clearReinforcementSelections();
+      clearReinf();
     } else {
       $("setBonus").value = "";
       $("groupSkill").value = "";
-      setReinforcementSelections(row.reinforcements || []);
+      setReinf(row.reinforcements || []);
     }
 
-    syncRightSideToType(row.type);
+    syncViewUI(row.type);
     updateAddButtonState();
   }
 
@@ -795,7 +797,7 @@
     rebuildCounters(state);
   }
 
-  // --- Conflicts per view type
+  // --- Conflicts (per view/seed) ---
   function computeFavConflicts(state, type) {
     const byRoll = new Map();
     for (const r of state.rows) {
@@ -816,7 +818,7 @@
     return { byRoll, conflictIds, conflicts };
   }
 
-  // --- Optimize
+  // --- Optimize ---
   function buildOptimizePlan(state, type, rangeMode) {
     const { byRoll, conflicts } = computeFavConflicts(state, type);
 
@@ -829,7 +831,6 @@
     } else {
       for (const [roll] of byRoll.entries()) maxRoll = Math.max(maxRoll, roll);
     }
-
     if (maxRoll <= 0) return { maxRoll: 0, lines: [], conflicts: 0, favCount: 0 };
 
     let favCount = 0;
@@ -841,7 +842,6 @@
       if (!favs.length) lines.push({ roll, kind:"dud", conflict:false });
       else lines.push({ roll, kind:"fav", conflict:(favs.length>1), favs });
     }
-
     return { maxRoll, lines, conflicts, favCount };
   }
 
@@ -850,11 +850,10 @@
       return `${r.weapon} / ${r.element} — Set: ${r.setBonus || "-"}, Group: ${r.groupSkill || "-"}`;
     }
     const list = (r.reinforcements || []);
-    const reinf = list.length ? list.join(", ") : "-";
-    return `${r.weapon} / ${r.element} — ${reinf}`;
+    return `${r.weapon} / ${r.element} — ${list.length ? list.join(", ") : "-"}`;
   }
 
-  // --- Filtering/sorting (current view only)
+  // --- Filters/sort (current view only) ---
   function matchesFilter(row, currentType, filterText, filterMark) {
     if (row.type !== currentType) return false;
 
@@ -894,29 +893,31 @@
     return copy;
   }
 
-  function syncRightSideToType(type) {
+  // --- View UI sync ---
+  function closeAllMenus() {
+    document.querySelectorAll(".menu").forEach(m => m.style.display = "none");
+    document.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded","false"));
+  }
+
+  function syncViewUI(type) {
     $("rightTitle").textContent = (type === "skills")
       ? "Skills Seed — Roadmap + Table"
       : "Reinforcement Seed — Roadmap + Table";
-
     $("optPill").textContent = (type === "skills")
       ? "Optimize Skills Rolls"
       : "Optimize Reinforcement Rolls";
-
     $("filterText").placeholder = (type === "skills")
       ? "Search skills view..."
       : "Search reinforcement view...";
-
     $("viewPill").textContent = (type === "skills") ? "View: Skills" : "View: Reinf";
 
     $("optOut").style.display = "none";
     $("optOut").innerHTML = "";
     $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-
     closeAllMenus();
   }
 
-  // --- Validation: must pick required + mark (dud/fav)
+  // --- Validation gating ---
   function validateInputs() {
     const type = $("rollType").value;
     const mark = $("mark").value;
@@ -930,8 +931,7 @@
       if (!$("groupSkill").value) return { ok:false, msg:"Select a Group skill." };
       return { ok:true, msg:"" };
     } else {
-      const picks = getReinforcementSelections();
-      // Require all 5 (no blanks)
+      const picks = getReinf();
       if (picks.some(v => !v)) return { ok:false, msg:"Select all 5 Reinforcements." };
       return { ok:true, msg:"" };
     }
@@ -943,17 +943,11 @@
     $("validationHint").textContent = v.ok ? "" : v.msg;
   }
 
-  // --- Actions menus
-  function closeAllMenus() {
-    document.querySelectorAll(".menu").forEach(m => m.style.display = "none");
-    document.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded","false"));
-  }
-
-  // --- Render
+  // --- Render ---
   function render() {
     const state = loadState();
-
     const viewType = $("rollType").value;
+
     const weapon = $("weapon").value;
     const element = $("element").value;
 
@@ -1040,6 +1034,7 @@
       tbody.appendChild(tr);
     }
 
+    // Summary preview
     const plan = buildOptimizePlan(state, viewType, $("optRange").value);
     if (plan.maxRoll <= 0) {
       $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
@@ -1051,166 +1046,8 @@
     updateAddButtonState();
   }
 
-  // --- Init selects
-  makeOptions($("weapon"), WEAPONS);
-  makeOptions($("element"), ELEMENTS);
-  makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
-  makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
-  ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
-    makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
-  });
-
-  // Session label
-  const sessionId = nowId().slice(0,8);
-  $("sessionPill").textContent = `Session: ${sessionId}`;
-
-  // View change
-  $("rollType").addEventListener("change", () => {
-    const t = $("rollType").value;
-    $("skillsFields").style.display = (t === "skills") ? "" : "none";
-    $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
-    syncRightSideToType(t);
-    render();
-  });
-
-  // Validation triggers
-  ["mark","setBonus","groupSkill","reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
-    $(id).addEventListener("change", updateAddButtonState);
-    $(id).addEventListener("input", updateAddButtonState);
-  });
-
-  // Rerender triggers
-  ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
-    $(id).addEventListener("input", render);
-    $(id).addEventListener("change", render);
-  });
-
-  // Add roll / Save edit
-  $("addRollBtn").addEventListener("click", () => {
-    const v = validateInputs();
-    if (!v.ok) { updateAddButtonState(); return; }
-
-    const state = loadState();
-
-    if (editingId) {
-      const idx = state.rows.findIndex(r => r.id === editingId);
-      if (idx === -1) { setEditingMode(false); render(); return; }
-
-      const row = state.rows[idx];
-      row.mark = $("mark").value;
-
-      if (row.type === "skills") {
-        row.setBonus = $("setBonus").value;
-        row.groupSkill = $("groupSkill").value;
-      } else {
-        row.reinforcements = getReinforcementSelections().slice();
-      }
-
-      rebuildCounters(state);
-      saveState(state);
-
-      setEditingMode(false);
-      resetInputs();
-      render();
-      return;
-    }
-
-    const type = $("rollType").value;
-    const weapon = $("weapon").value;
-    const element = $("element").value;
-    const roll = nextRollNumber(state, type, weapon, element);
-
-    const row = {
-      id: nowId(),
-      createdAt: Date.now(),
-      type, weapon, element, roll,
-      mark: $("mark").value
-    };
-
-    if (type === "skills") {
-      row.setBonus = $("setBonus").value;
-      row.groupSkill = $("groupSkill").value;
-      row.reinforcements = [];
-    } else {
-      row.reinforcements = getReinforcementSelections().slice();
-      row.setBonus = "";
-      row.groupSkill = "";
-    }
-
-    state.rows.push(row);
-    saveState(state);
-
-    resetInputs();
-    render();
-  });
-
-  // Cancel edit
-  $("cancelEditBtn").addEventListener("click", () => {
-    setEditingMode(false);
-    resetInputs();
-    render();
-  });
-
-  // Table actions (menus + actions)
-  $("tbody").addEventListener("click", (e) => {
-    const el = e.target.closest("[data-act]");
-    if (!el) return;
-
-    const act = el.getAttribute("data-act");
-    const id = el.getAttribute("data-id");
-
-    if (act === "menu") {
-      // Toggle the menu
-      const menu = document.getElementById(`menu-${id}`);
-      const open = menu && menu.style.display === "block";
-      closeAllMenus();
-      if (menu && !open) {
-        menu.style.display = "block";
-        el.setAttribute("aria-expanded","true");
-      }
-      return;
-    }
-
-    if (!id) return;
-
-    const state = loadState();
-    const idx = state.rows.findIndex(r => r.id === id);
-    if (idx === -1) return;
-    const row = state.rows[idx];
-
-    if (act === "mark-fav") { row.mark = "fav"; saveState(state); closeAllMenus(); render(); return; }
-    if (act === "mark-dud") { row.mark = "dud"; saveState(state); closeAllMenus(); render(); return; }
-    if (act === "mark-clear") { row.mark = ""; saveState(state); closeAllMenus(); render(); return; }
-
-    if (act === "edit") {
-      populateFormFromRow(row);
-      setEditingMode(true, row);
-      closeAllMenus();
-      render();
-      return;
-    }
-
-    if (act === "del") {
-      if (editingId === id) { setEditingMode(false); resetInputs(); }
-      deleteRowAndCollapse(state, row);
-      saveState(state);
-      closeAllMenus();
-      render();
-      return;
-    }
-  });
-
-  // Close menus when clicking elsewhere / pressing ESC
-  document.addEventListener("click", (e) => {
-    const insideMenu = e.target.closest(".actionsWrap");
-    if (!insideMenu) closeAllMenus();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAllMenus();
-  });
-
-  // Optimize (current view)
-  $("optBtn").addEventListener("click", () => {
+  // --- Optimize buttons ---
+  function renderOptimize() {
     const state = loadState();
     const type = $("rollType").value;
     const plan = buildOptimizePlan(state, type, $("optRange").value);
@@ -1267,84 +1104,230 @@
           </div>
         `;
       }
-
       out.appendChild(div);
     }
 
     out.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  });
+  }
 
-  $("optClearBtn").addEventListener("click", () => {
-    $("optOut").style.display = "none";
-    $("optOut").innerHTML = "";
-    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-  });
+  // --- Wire events (this is what was missing/broken) ---
+  function wireEvents() {
+    // Switch view
+    $("rollType").addEventListener("change", () => {
+      const t = $("rollType").value;
+      $("skillsFields").style.display = (t === "skills") ? "" : "none";
+      $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+      syncViewUI(t);
+      render();
+    });
 
-  // Export / Import
-  $("exportBtn").addEventListener("click", () => {
-    const state = loadState();
-    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-    download(`gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
-  });
+    // Re-render triggers
+    ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
+      $(id).addEventListener("input", render);
+      $(id).addEventListener("change", render);
+    });
 
-  $("importBtn").addEventListener("click", async () => {
-    const inp = document.createElement("input");
-    inp.type = "file";
-    inp.accept = "application/json,.json";
-    inp.onchange = async () => {
-      const file = inp.files && inp.files[0];
-      if (!file) return;
-      try{
-        const txt = await readFileAsText(file);
-        const parsed = JSON.parse(txt);
-        if (!parsed.rows) throw new Error("Invalid file format");
+    // Validation triggers
+    ["mark","setBonus","groupSkill","reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+      $(id).addEventListener("input", updateAddButtonState);
+      $(id).addEventListener("change", updateAddButtonState);
+    });
 
-        for (const r of parsed.rows) {
-          if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
-          if (!r.reinforcements) r.reinforcements = [];
-          if ("notes" in r) delete r.notes;
+    // Add roll / Save edit
+    $("addRollBtn").addEventListener("click", () => {
+      const v = validateInputs();
+      if (!v.ok) { updateAddButtonState(); return; }
+
+      const state = loadState();
+
+      if (editingId) {
+        const idx = state.rows.findIndex(r => r.id === editingId);
+        if (idx === -1) { setEditingMode(false); render(); return; }
+
+        const row = state.rows[idx];
+        row.mark = $("mark").value;
+
+        if (row.type === "skills") {
+          row.setBonus = $("setBonus").value;
+          row.groupSkill = $("groupSkill").value;
+        } else {
+          row.reinforcements = getReinf().slice();
         }
-        parsed.counters = parsed.counters || {};
-        rebuildCounters(parsed);
 
-        sessionStorage.setItem(KEY, JSON.stringify(parsed));
+        rebuildCounters(state);
+        saveState(state);
 
         setEditingMode(false);
         resetInputs();
-        syncRightSideToType($("rollType").value);
         render();
-      }catch(err){
-        alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
+        return;
       }
-    };
-    inp.click();
-  });
 
-  // Init
-  makeOptions($("weapon"), WEAPONS);
-  makeOptions($("element"), ELEMENTS);
-  makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
-  makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
-  ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
-    makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
-  });
+      const type = $("rollType").value;
+      const weapon = $("weapon").value;
+      const element = $("element").value;
+      const roll = nextRollNumber(state, type, weapon, element);
 
-  const sessionId = nowId().slice(0,8);
-  $("sessionPill").textContent = `Session: ${sessionId}`;
+      const row = {
+        id: nowId(),
+        createdAt: Date.now(),
+        type, weapon, element, roll,
+        mark: $("mark").value
+      };
 
-  $("rollType").addEventListener("change", () => {
+      if (type === "skills") {
+        row.setBonus = $("setBonus").value;
+        row.groupSkill = $("groupSkill").value;
+        row.reinforcements = [];
+      } else {
+        row.reinforcements = getReinf().slice();
+        row.setBonus = "";
+        row.groupSkill = "";
+      }
+
+      state.rows.push(row);
+      saveState(state);
+
+      resetInputs();
+      render();
+    });
+
+    // Cancel edit
+    $("cancelEditBtn").addEventListener("click", () => {
+      setEditingMode(false);
+      resetInputs();
+      render();
+    });
+
+    // Table actions + menus
+    $("tbody").addEventListener("click", (e) => {
+      const el = e.target.closest("[data-act]");
+      if (!el) return;
+
+      const act = el.getAttribute("data-act");
+      const id = el.getAttribute("data-id");
+
+      if (act === "menu") {
+        const menu = document.getElementById(`menu-${id}`);
+        const open = menu && menu.style.display === "block";
+        closeAllMenus();
+        if (menu && !open) {
+          menu.style.display = "block";
+          el.setAttribute("aria-expanded","true");
+        }
+        return;
+      }
+
+      if (!id) return;
+
+      const state = loadState();
+      const idx = state.rows.findIndex(r => r.id === id);
+      if (idx === -1) return;
+      const row = state.rows[idx];
+
+      if (act === "mark-fav") { row.mark = "fav"; saveState(state); closeAllMenus(); render(); return; }
+      if (act === "mark-dud") { row.mark = "dud"; saveState(state); closeAllMenus(); render(); return; }
+      if (act === "mark-clear") { row.mark = ""; saveState(state); closeAllMenus(); render(); return; }
+
+      if (act === "edit") {
+        populateFormFromRow(row);
+        setEditingMode(true, row);
+        closeAllMenus();
+        render();
+        return;
+      }
+
+      if (act === "del") {
+        if (editingId === id) { setEditingMode(false); resetInputs(); }
+        deleteRowAndCollapse(state, row);
+        saveState(state);
+        closeAllMenus();
+        render();
+        return;
+      }
+    });
+
+    // Close menus on outside click / ESC
+    document.addEventListener("click", (e) => {
+      const inside = e.target.closest(".actionsWrap");
+      if (!inside) closeAllMenus();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAllMenus();
+    });
+
+    // Optimize
+    $("optBtn").addEventListener("click", renderOptimize);
+    $("optClearBtn").addEventListener("click", () => {
+      $("optOut").style.display = "none";
+      $("optOut").innerHTML = "";
+      $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+    });
+
+    // Export / Import
+    $("exportBtn").addEventListener("click", () => {
+      const state = loadState();
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+      download(`gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
+    });
+
+    $("importBtn").addEventListener("click", async () => {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = "application/json,.json";
+      inp.onchange = async () => {
+        const file = inp.files && inp.files[0];
+        if (!file) return;
+        try{
+          const txt = await readFileAsText(file);
+          const parsed = JSON.parse(txt);
+          if (!parsed.rows) throw new Error("Invalid file format");
+
+          for (const r of parsed.rows) {
+            if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
+            if (!Array.isArray(r.reinforcements)) r.reinforcements = [];
+          }
+          parsed.counters = parsed.counters || {};
+          rebuildCounters(parsed);
+
+          sessionStorage.setItem(KEY, JSON.stringify(parsed));
+
+          setEditingMode(false);
+          resetInputs();
+          syncViewUI($("rollType").value);
+          render();
+        }catch(err){
+          alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
+        }
+      };
+      inp.click();
+    });
+  }
+
+  // --- Init ---
+  function init() {
+    makeOptions($("weapon"), WEAPONS, null);
+    makeOptions($("element"), ELEMENTS, null);
+    makeOptions($("setBonus"), SET_BONUS, "Select set bonus...");
+    makeOptions($("groupSkill"), GROUP_SKILLS, "Select group skill...");
+    ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+      makeOptions($(id), REINFORCEMENTS, "Select reinforcement...");
+    });
+
+    const sessionId = nowId().slice(0,8);
+    $("sessionPill").textContent = `Session: ${sessionId}`;
+
     const t = $("rollType").value;
     $("skillsFields").style.display = (t === "skills") ? "" : "none";
     $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
-    syncRightSideToType(t);
+    syncViewUI(t);
+
+    wireEvents();
     updateAddButtonState();
     render();
-  });
+  }
 
-  syncRightSideToType($("rollType").value);
-  updateAddButtonState();
-  render();
-
+  init();
 })();
 </script>
 </body>
