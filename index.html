@@ -22,8 +22,42 @@
                   var(--bg);
       color:var(--text);
     }
-    h1{ margin:0 0 10px; font-size:22px; letter-spacing:.2px; }
-    .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; line-height:1.45; }
+
+    /* Header */
+    .topbar{
+      max-width:1200px;
+      margin:0 auto 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:260px;
+    }
+    .brand img{
+      height:34px;
+      width:auto;
+      display:block;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+    }
+    .brandText h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    .brandText .sub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    /* Layout */
     .wrap{ max-width:1200px; margin:0 auto; }
     .grid{
       display:grid;
@@ -33,6 +67,8 @@
     @media(min-width: 980px){
       .grid{ grid-template-columns: 420px 1fr; align-items:start; }
     }
+
+    /* Cards */
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
       border:1px solid var(--line);
@@ -58,6 +94,8 @@
       gap:8px;
       align-items:center;
     }
+
+    /* Form */
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     select, input{
@@ -88,10 +126,6 @@
       background: rgba(31,129,196,.18);
       border-color: rgba(31,129,196,.55);
     }
-    button.danger{
-      background: rgba(231,76,60,.12);
-      border-color: rgba(231,76,60,.45);
-    }
     button.good{
       background: rgba(46,204,113,.12);
       border-color: rgba(46,204,113,.45);
@@ -102,6 +136,10 @@
     }
     button.ghost{
       background: rgba(0,0,0,.15);
+    }
+    button.danger{
+      background: rgba(231,76,60,.12);
+      border-color: rgba(231,76,60,.45);
     }
     button:disabled{
       opacity:.55;
@@ -122,6 +160,7 @@
       background: rgba(0,0,0,.25);
     }
 
+    /* Table */
     table{
       width:100%;
       border-collapse:separate;
@@ -153,15 +192,6 @@
     .actions{
       display:flex; gap:8px; align-items:center; flex-wrap:wrap;
     }
-    .tag{
-      font-size:12px;
-      padding:4px 8px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background: rgba(0,0,0,.2);
-      color: var(--muted);
-      display:inline-block;
-    }
     .badge{
       font-size:12px;
       padding:4px 8px;
@@ -186,6 +216,7 @@
       border-bottom-color: rgba(231,76,60,.35);
     }
 
+    /* Edit banner */
     .editBanner{
       margin-top:10px;
       padding:10px 12px;
@@ -199,6 +230,7 @@
     }
     .editBanner strong{ color:var(--text); }
 
+    /* Search + headings */
     .split{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
     }
@@ -271,194 +303,238 @@
       padding:0;
       color:var(--text);
     }
+
+    /* Footer */
+    footer{
+      max-width:1200px;
+      margin:14px auto 0;
+      padding-top:14px;
+      border-top:1px solid rgba(35,50,68,.55);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    footer a{
+      color:var(--muted);
+      text-decoration:none;
+      border-bottom:1px dashed rgba(155,176,198,.35);
+    }
+    footer a:hover{
+      color:var(--text);
+      border-bottom-color: rgba(231,238,247,.55);
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Gog Roll Tracker</h1>
-  <div class="sub">
-    Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate “views” so you don’t mix timelines.
-  </div>
 
-  <div class="grid">
-    <!-- LEFT: INPUTS -->
-    <div class="card">
-      <div class="hd">
-        <div class="pill">Roll input</div>
-        <div class="pill mono" id="sessionPill">Session</div>
-      </div>
-      <div class="bd">
-        <div class="row">
-          <div class="col">
-            <label>View / Roll type</label>
-            <select id="rollType">
-              <option value="skills">Weapon Skills seed</option>
-              <option value="reinforce">Reinforcement seed</option>
-            </select>
-          </div>
-          <div class="col">
-            <label>Weapon</label>
-            <select id="weapon"></select>
-          </div>
-          <div class="col">
-            <label>Element</label>
-            <select id="element"></select>
-          </div>
-        </div>
-
-        <div class="editBanner" id="editBanner">
-          Editing roll <strong id="editBannerRoll">#?</strong> for <strong id="editBannerCombo">?</strong>.
-          (Weapon/Element/Type are locked while editing.)
-        </div>
-
-        <div class="row" id="skillsFields" style="margin-top:10px;">
-          <div class="col">
-            <label>Set bonus</label>
-            <select id="setBonus"></select>
-          </div>
-          <div class="col">
-            <label>Group skill</label>
-            <select id="groupSkill"></select>
-          </div>
-        </div>
-
-        <div id="reinforceFields" style="margin-top:10px; display:none;">
-          <div class="row">
-            <div class="col">
-              <label>Reinforcement 1</label>
-              <select id="reinforcement1"></select>
-            </div>
-            <div class="col">
-              <label>Reinforcement 2</label>
-              <select id="reinforcement2"></select>
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div class="col">
-              <label>Reinforcement 3</label>
-              <select id="reinforcement3"></select>
-            </div>
-            <div class="col">
-              <label>Reinforcement 4</label>
-              <select id="reinforcement4"></select>
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div class="col">
-              <label>Reinforcement 5</label>
-              <select id="reinforcement5"></select>
-            </div>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <div class="col">
-            <label>Mark this roll</label>
-            <select id="mark">
-              <option value="">(leave unmarked)</option>
-              <option value="dud">Dud</option>
-              <option value="fav">Fav</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="btns">
-          <button class="primary" id="addRollBtn">+ Add roll</button>
-          <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
-          <button class="good" id="exportBtn">Export JSON</button>
-          <button id="importBtn">Import JSON</button>
-        </div>
-
-        <div class="hint" id="rollHint"></div>
-        <div class="kpi" style="margin-top:12px;">
-          <span id="kpiTotal">Total: 0</span>
-          <span id="kpiCombo">This combo: 0</span>
-          <span id="kpiCombos">Combos: 0</span>
+  <!-- Brand header with your logo -->
+  <div class="topbar">
+    <div class="brand">
+      <img
+        src="https://cdn-iledjic.nitrocdn.com/JlvojpVvcgHjATJNzbWXlCUCjRdUJyfe/assets/images/optimized/rev-2bf6543/idlekamidesign.co.uk/wp-content/uploads/Header-Logo.webp"
+        alt="idlekamidesign.co.uk logo"
+        loading="lazy"
+      />
+      <div class="brandText">
+        <h1>Gog Roll Tracker</h1>
+        <div class="sub">
+          Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate “views” so you don’t mix timelines.
         </div>
       </div>
     </div>
+    <div class="pill mono" id="sessionPill">Session</div>
+  </div>
 
-    <!-- RIGHT: OPTIMIZE + TABLE -->
-    <div class="card">
-      <div class="hd">
-        <div class="split" style="width:100%;">
-          <div class="pill" id="rightTitle">Roadmap + Table</div>
-          <div class="search">
-            <div class="col">
-              <label>Filter (text)</label>
-              <input id="filterText" placeholder="Search current view..." />
-            </div>
-            <div class="col">
-              <label>Filter mark</label>
-              <select id="filterMark">
-                <option value="all">All</option>
-                <option value="fav">Fav</option>
-                <option value="dud">Dud</option>
-                <option value="unmarked">Unmarked</option>
-              </select>
-            </div>
-            <div class="col">
-              <label>Sort</label>
-              <select id="sortMode">
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="weapon">Weapon → Element → Roll</option>
-                <option value="element">Element → Weapon → Roll</option>
-                <option value="roll">Roll # (within combo)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="optWrap">
-        <div class="optTitle">
-          <div class="pill" id="optPill">Optimize Rolls</div>
-          <div class="row" style="margin:0;">
-            <div class="col" style="min-width:220px;">
-              <label style="margin-bottom:6px;">Range</label>
-              <select id="optRange">
-                <option value="toMaxFav">From roll 1 → max Fav roll</option>
-                <option value="toMaxSeen">From roll 1 → max recorded roll</option>
-              </select>
-            </div>
-            <div class="col" style="min-width:220px; align-self:end;">
-              <button class="primary" id="optBtn">Optimize</button>
-              <button class="ghost" id="optClearBtn">Clear</button>
-            </div>
-          </div>
-        </div>
-        <div class="tiny" id="optSummary">Mark some rolls as Fav to generate a plan.</div>
-        <div class="optOut" id="optOut" style="display:none;"></div>
-      </div>
-
-      <div class="bd" style="padding:0;">
-        <div style="max-height:62vh; overflow:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:150px;">Mark</th>
-                <th>Weapon</th>
-                <th>Element</th>
-                <th style="width:70px;">Roll</th>
-                <th>Details</th>
-                <th class="right" style="width:210px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT: INPUTS -->
+      <div class="card">
+        <div class="hd">
+          <div class="pill">Roll input</div>
+          <div class="pill" id="viewPill">View: Skills</div>
         </div>
         <div class="bd">
-          <div class="tiny">
-            Stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
-            Export JSON if you want to keep/share a batch.
+          <div class="row">
+            <div class="col">
+              <label>View / Roll type</label>
+              <select id="rollType">
+                <option value="skills">Weapon Skills seed</option>
+                <option value="reinforce">Reinforcement seed</option>
+              </select>
+            </div>
+            <div class="col">
+              <label>Weapon</label>
+              <select id="weapon"></select>
+            </div>
+            <div class="col">
+              <label>Element</label>
+              <select id="element"></select>
+            </div>
+          </div>
+
+          <div class="editBanner" id="editBanner">
+            Editing roll <strong id="editBannerRoll">#?</strong> for <strong id="editBannerCombo">?</strong>.
+            (Weapon/Element/Type are locked while editing.)
+          </div>
+
+          <div class="row" id="skillsFields" style="margin-top:10px;">
+            <div class="col">
+              <label>Set bonus</label>
+              <select id="setBonus"></select>
+            </div>
+            <div class="col">
+              <label>Group skill</label>
+              <select id="groupSkill"></select>
+            </div>
+          </div>
+
+          <div id="reinforceFields" style="margin-top:10px; display:none;">
+            <div class="row">
+              <div class="col">
+                <label>Reinforcement 1</label>
+                <select id="reinforcement1"></select>
+              </div>
+              <div class="col">
+                <label>Reinforcement 2</label>
+                <select id="reinforcement2"></select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div class="col">
+                <label>Reinforcement 3</label>
+                <select id="reinforcement3"></select>
+              </div>
+              <div class="col">
+                <label>Reinforcement 4</label>
+                <select id="reinforcement4"></select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div class="col">
+                <label>Reinforcement 5</label>
+                <select id="reinforcement5"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="col">
+              <label>Mark this roll</label>
+              <select id="mark">
+                <option value="">(leave unmarked)</option>
+                <option value="dud">Dud</option>
+                <option value="fav">Fav</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="primary" id="addRollBtn">+ Add roll</button>
+            <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
+            <button class="good" id="exportBtn">Export JSON</button>
+            <button id="importBtn">Import JSON</button>
+          </div>
+
+          <div class="hint" id="rollHint"></div>
+          <div class="kpi" style="margin-top:12px;">
+            <span id="kpiTotal">Total: 0</span>
+            <span id="kpiCombo">This combo: 0</span>
+            <span id="kpiCombos">Combos: 0</span>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- RIGHT: OPTIMIZE + TABLE -->
+      <div class="card">
+        <div class="hd">
+          <div class="split" style="width:100%;">
+            <div class="pill" id="rightTitle">Skills Seed — Roadmap + Table</div>
+            <div class="search">
+              <div class="col">
+                <label>Filter (text)</label>
+                <input id="filterText" placeholder="Search skills view..." />
+              </div>
+              <div class="col">
+                <label>Filter mark</label>
+                <select id="filterMark">
+                  <option value="all">All</option>
+                  <option value="fav">Fav</option>
+                  <option value="dud">Dud</option>
+                  <option value="unmarked">Unmarked</option>
+                </select>
+              </div>
+              <div class="col">
+                <label>Sort</label>
+                <select id="sortMode">
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="weapon">Weapon → Element → Roll</option>
+                  <option value="element">Element → Weapon → Roll</option>
+                  <option value="roll">Roll # (within combo)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="optWrap">
+          <div class="optTitle">
+            <div class="pill" id="optPill">Optimize Skills Rolls</div>
+            <div class="row" style="margin:0;">
+              <div class="col" style="min-width:220px;">
+                <label style="margin-bottom:6px;">Range</label>
+                <select id="optRange">
+                  <option value="toMaxFav">From roll 1 → max Fav roll</option>
+                  <option value="toMaxSeen">From roll 1 → max recorded roll</option>
+                </select>
+              </div>
+              <div class="col" style="min-width:220px; align-self:end;">
+                <button class="primary" id="optBtn">Optimize</button>
+                <button class="ghost" id="optClearBtn">Clear</button>
+              </div>
+            </div>
+          </div>
+          <div class="tiny" id="optSummary">Mark some rolls as Fav to generate a plan.</div>
+          <div class="optOut" id="optOut" style="display:none;"></div>
+        </div>
+
+        <div class="bd" style="padding:0;">
+          <div style="max-height:62vh; overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:150px;">Mark</th>
+                  <th>Weapon</th>
+                  <th>Element</th>
+                  <th style="width:70px;">Roll</th>
+                  <th>Details</th>
+                  <th class="right" style="width:210px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="bd">
+            <div class="tiny">
+              Stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
+              Export JSON if you want to keep/share a batch.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
+
+  <footer>
+    <div>© idlekamidesign.co.uk 2026</div>
+    <div><a href="https://idlekamidesign.co.uk" target="_blank" rel="noopener noreferrer">idlekamidesign.co.uk</a></div>
+  </footer>
 
 <script>
 (() => {
@@ -492,7 +568,7 @@
   ];
 
   // Bump version
-  const KEY = "gog_tracker_session_v1_5";
+  const KEY = "gog_tracker_session_v1_5_brand";
 
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
@@ -660,7 +736,6 @@
       setReinforcementSelections(row.reinforcements || []);
     }
 
-    // Keep right-side view synced
     syncRightSideToType(row.type);
   }
 
@@ -676,9 +751,8 @@
     rebuildCounters(state);
   }
 
-  // Conflicts for a given type
   function computeFavConflicts(state, type) {
-    const byRoll = new Map(); // roll -> array rows
+    const byRoll = new Map();
     for (const r of state.rows) {
       if (r.type !== type) continue;
       if (r.mark !== "fav") continue;
@@ -686,20 +760,19 @@
       if (!byRoll.has(roll)) byRoll.set(roll, []);
       byRoll.get(roll).push(r);
     }
-    const conflictRolls = new Set();
     const conflictIds = new Set();
+    let conflicts = 0;
     for (const [roll, arr] of byRoll.entries()) {
       if (arr.length > 1) {
-        conflictRolls.add(roll);
+        conflicts++;
         for (const r of arr) conflictIds.add(r.id);
       }
     }
-    return { byRoll, conflictRolls, conflictIds };
+    return { byRoll, conflictIds, conflicts };
   }
 
-  // Optimize
   function buildOptimizePlan(state, type, rangeMode) {
-    const { byRoll } = computeFavConflicts(state, type);
+    const { byRoll, conflicts } = computeFavConflicts(state, type);
 
     let maxRoll = 0;
     if (rangeMode === "toMaxSeen") {
@@ -717,17 +790,10 @@
     for (const arr of byRoll.values()) favCount += arr.length;
 
     const lines = [];
-    let conflicts = 0;
-
     for (let roll = 1; roll <= maxRoll; roll++) {
       const favs = byRoll.get(roll) || [];
-      if (!favs.length) {
-        lines.push({ roll, kind:"dud", conflict:false });
-      } else {
-        const conflict = favs.length > 1;
-        if (conflict) conflicts++;
-        lines.push({ roll, kind:"fav", conflict, favs });
-      }
+      if (!favs.length) lines.push({ roll, kind:"dud", conflict:false });
+      else lines.push({ roll, kind:"fav", conflict:(favs.length>1), favs });
     }
 
     return { maxRoll, lines, conflicts, favCount };
@@ -742,7 +808,6 @@
     return `${r.weapon} / ${r.element} — ${reinf}`;
   }
 
-  // Filters & sorting (current view only)
   function matchesFilter(row, currentType, filterText, filterMark) {
     if (row.type !== currentType) return false;
 
@@ -772,24 +837,19 @@
     if (mode === "oldest") return copy.sort((a,b) => cmpNum(a.createdAt, b.createdAt));
     if (mode === "newest") return copy.sort((a,b) => cmpNum(b.createdAt, a.createdAt));
 
-    if (mode === "weapon") {
-      return copy.sort((a,b) =>
-        cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpNum(a.roll,b.roll)
-      );
-    }
-    if (mode === "element") {
-      return copy.sort((a,b) =>
-        cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpNum(a.roll,b.roll)
-      );
-    }
-    if (mode === "roll") {
-      return copy.sort((a,b) => cmpNum(a.roll,b.roll) || cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element));
-    }
+    if (mode === "weapon") return copy.sort((a,b) =>
+      cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpNum(a.roll,b.roll)
+    );
+    if (mode === "element") return copy.sort((a,b) =>
+      cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpNum(a.roll,b.roll)
+    );
+    if (mode === "roll") return copy.sort((a,b) =>
+      cmpNum(a.roll,b.roll) || cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element)
+    );
     return copy;
   }
 
   function syncRightSideToType(type) {
-    // Titles + placeholders (UX clarity)
     $("rightTitle").textContent = (type === "skills")
       ? "Skills Seed — Roadmap + Table"
       : "Reinforcement Seed — Roadmap + Table";
@@ -802,13 +862,13 @@
       ? "Search skills view..."
       : "Search reinforcement view...";
 
-    // Clear optimize output when switching views (avoids “wrong seed” confusion)
+    $("viewPill").textContent = (type === "skills") ? "View: Skills" : "View: Reinf";
+
     $("optOut").style.display = "none";
     $("optOut").innerHTML = "";
     $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
   }
 
-  // Render
   function render() {
     const state = loadState();
 
@@ -821,16 +881,13 @@
     $("kpiCombo").textContent = `This combo: ${comboCount}`;
     $("kpiCombos").textContent = `Combos: ${uniqueComboCount(state)}`;
 
-    const hint = editingId
+    $("rollHint").textContent = editingId
       ? `Editing mode: press “Save edit” when you're done.`
       : (viewType === "skills"
         ? `Next roll for ${weapon} (${element}) Skills will be roll #${comboCount + 1}.`
         : `Next roll for ${weapon} (${element}) Reinf will be roll #${comboCount + 1}.`);
-    $("rollHint").textContent = hint;
 
-    // Conflicts only for current view type
-    const conflicts = computeFavConflicts(state, viewType);
-    const conflictIds = conflicts.conflictIds;
+    const { conflictIds, conflicts } = computeFavConflicts(state, viewType);
 
     const fText = $("filterText").value;
     const fMark = $("filterMark").value;
@@ -847,10 +904,9 @@
       if (conflictIds.has(row.id) && row.mark === "fav") tr.className = "conflictRow";
 
       const tdMark = document.createElement("td");
-      const markBadge = row.mark === "fav"
+      tdMark.innerHTML = row.mark === "fav"
         ? `<span class="badge fav">Fav</span>`
         : (row.mark === "dud" ? `<span class="badge dud">Dud</span>` : `<span class="badge">(unmarked)</span>`);
-      tdMark.innerHTML = `${markBadge}`;
       tr.appendChild(tdMark);
 
       const tdW = document.createElement("td");
@@ -883,11 +939,11 @@
       tdA.className = "right";
       tdA.innerHTML = `
         <div class="actions" style="justify-content:flex-end;">
-          <button class="ghost" data-act="mark-fav" data-id="${row.id}" title="Mark as Fav">Fav</button>
-          <button class="ghost" data-act="mark-dud" data-id="${row.id}" title="Mark as Dud">Dud</button>
-          <button class="ghost" data-act="mark-clear" data-id="${row.id}" title="Clear mark">Clear</button>
-          <button data-act="edit" data-id="${row.id}" title="Edit">Edit</button>
-          <button class="danger" data-act="del" data-id="${row.id}" title="Delete">Del</button>
+          <button class="ghost" data-act="mark-fav" data-id="${row.id}">Fav</button>
+          <button class="ghost" data-act="mark-dud" data-id="${row.id}">Dud</button>
+          <button class="ghost" data-act="mark-clear" data-id="${row.id}">Clear</button>
+          <button data-act="edit" data-id="${row.id}">Edit</button>
+          <button class="danger" data-act="del" data-id="${row.id}">Del</button>
         </div>
       `;
       tr.appendChild(tdA);
@@ -895,18 +951,16 @@
       tbody.appendChild(tr);
     }
 
-    // Light optimize summary for current view
     const plan = buildOptimizePlan(state, viewType, $("optRange").value);
     if (plan.maxRoll <= 0) {
       $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
     } else {
       const conflictsTxt = plan.conflicts ? ` • Conflicts: ${plan.conflicts}` : "";
-      $("optSummary").textContent =
-        `Targets (Fav): ${plan.favCount} • Plan length: ${plan.maxRoll}${conflictsTxt}`;
+      $("optSummary").textContent = `Targets (Fav): ${plan.favCount} • Plan length: ${plan.maxRoll}${conflictsTxt}`;
     }
   }
 
-  // Init UI lists
+  // Init selects
   makeOptions($("weapon"), WEAPONS);
   makeOptions($("element"), ELEMENTS);
   makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
@@ -915,11 +969,11 @@
     makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
   });
 
-  // Session id label
+  // Session label
   const sessionId = nowId().slice(0,8);
   $("sessionPill").textContent = `Session: ${sessionId}`;
 
-  // Toggle fields on rollType change AND switch table view
+  // View change
   $("rollType").addEventListener("change", () => {
     const t = $("rollType").value;
     $("skillsFields").style.display = (t === "skills") ? "" : "none";
@@ -928,7 +982,7 @@
     render();
   });
 
-  // Rerender on filters/sort/range
+  // Rerender triggers
   ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
     $(id).addEventListener("input", render);
     $(id).addEventListener("change", render);
@@ -940,11 +994,7 @@
 
     if (editingId) {
       const idx = state.rows.findIndex(r => r.id === editingId);
-      if (idx === -1) {
-        setEditingMode(false);
-        render();
-        return;
-      }
+      if (idx === -1) { setEditingMode(false); render(); return; }
 
       const row = state.rows[idx];
       row.mark = ($("mark").value === "fav" || $("mark").value === "dud") ? $("mark").value : "";
@@ -965,11 +1015,9 @@
       return;
     }
 
-    // Normal add
     const type = $("rollType").value;
     const weapon = $("weapon").value;
     const element = $("element").value;
-
     const roll = nextRollNumber(state, type, weapon, element);
 
     const row = {
@@ -1015,7 +1063,6 @@
     const state = loadState();
     const idx = state.rows.findIndex(r => r.id === id);
     if (idx === -1) return;
-
     const row = state.rows[idx];
 
     if (act === "mark-fav") { row.mark = "fav"; saveState(state); render(); return; }
@@ -1030,10 +1077,7 @@
     }
 
     if (act === "del") {
-      if (editingId === id) {
-        setEditingMode(false);
-        resetInputs();
-      }
+      if (editingId === id) { setEditingMode(false); resetInputs(); }
       deleteRowAndCollapse(state, row);
       saveState(state);
       render();
@@ -1041,13 +1085,12 @@
     }
   });
 
-  // Optimize buttons (current view type)
+  // Optimize (current view)
   $("optBtn").addEventListener("click", () => {
     const state = loadState();
     const type = $("rollType").value;
-    const rangeMode = $("optRange").value;
+    const plan = buildOptimizePlan(state, type, $("optRange").value);
 
-    const plan = buildOptimizePlan(state, type, rangeMode);
     const out = $("optOut");
     out.innerHTML = "";
 
@@ -1058,8 +1101,8 @@
     }
 
     out.style.display = "";
-    const conflictNoun = plan.conflicts === 1 ? "conflict" : "conflicts";
     const seedName = (type === "skills") ? "Skills seed" : "Reinf seed";
+    const conflictNoun = plan.conflicts === 1 ? "conflict" : "conflicts";
 
     $("optSummary").textContent =
       `${seedName}: Targets (Fav) ${plan.favCount} • Plan length ${plan.maxRoll}` +
@@ -1135,7 +1178,6 @@
         for (const r of parsed.rows) {
           if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
           if (!r.reinforcements) r.reinforcements = [];
-          // Remove any old notes quietly if present
           if ("notes" in r) delete r.notes;
         }
         parsed.counters = parsed.counters || {};
@@ -1145,7 +1187,6 @@
 
         setEditingMode(false);
         resetInputs();
-        // Keep right side synced to current view
         syncRightSideToType($("rollType").value);
         render();
       }catch(err){
@@ -1155,12 +1196,12 @@
     inp.click();
   });
 
-  // First-time view sync
-  syncRightSideToType($("rollType").value);
-
-  // First render
-  render();
-
+  // Start
+  function init() {
+    syncRightSideToType($("rollType").value);
+    render();
+  }
+  init();
 })();
 </script>
 </body>
