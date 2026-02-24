@@ -54,7 +54,11 @@
       border:1px solid var(--line);
       color:var(--muted);
       background: rgba(0,0,0,.25);
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
     }
+    .pill strong{ color:var(--text); font-weight:700; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     select, input, textarea{
@@ -93,6 +97,18 @@
     button.good{
       background: rgba(46,204,113,.12);
       border-color: rgba(46,204,113,.45);
+    }
+    button.warn{
+      background: rgba(241,196,15,.10);
+      border-color: rgba(241,196,15,.35);
+    }
+    button.ghost{
+      background: rgba(0,0,0,.15);
+    }
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
     }
     .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
     .kpi{
@@ -143,6 +159,7 @@
       background: rgba(0,0,0,.2);
       color: var(--muted);
       display:inline-block;
+      margin-left:6px;
     }
     .mono{ font-family:var(--mono); }
     .right{ text-align:right; }
@@ -159,14 +176,42 @@
       display:flex; gap:10px; flex-wrap:wrap; align-items:end;
     }
     .search .col{ min-width:200px; }
+
+    .starBtn{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:16px;
+      line-height:1;
+      cursor:pointer;
+    }
+    .starBtn:hover{ border-color: rgba(241,196,15,.7); }
+    .typeCell{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .editBanner{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px solid rgba(241,196,15,.35);
+      background: rgba(241,196,15,.08);
+      border-radius:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+      display:none;
+    }
+    .editBanner strong{ color:var(--text); }
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Gog Roll Tracker</h1>
   <div class="sub">
-    A glorified spreadsheet, but in browser form. Tracks rolls per weapon+element+type (rolls reset when you switch combo),
-    and keeps everything only for this tab session (close the tab = clean slate).
+    Tracks rolls per weapon+element+type (rolls reset when you switch combo) and keeps everything only for this tab session.
+    Close the tab = clean slate.
   </div>
 
   <div class="grid">
@@ -195,6 +240,11 @@
           </div>
         </div>
 
+        <div class="editBanner" id="editBanner">
+          Editing roll <strong id="editBannerRoll">#?</strong> for <strong id="editBannerCombo">?</strong>.
+          (Weapon/Element/Type are locked while editing.)
+        </div>
+
         <div class="row" id="skillsFields" style="margin-top:10px;">
           <div class="col">
             <label>Set bonus</label>
@@ -206,7 +256,7 @@
           </div>
         </div>
 
-        <!-- v1.2: 5 reinforcement dropdowns -->
+        <!-- 5 reinforcement dropdowns -->
         <div id="reinforceFields" style="margin-top:10px; display:none;">
           <div class="row">
             <div class="col">
@@ -245,6 +295,7 @@
 
         <div class="btns">
           <button class="primary" id="addRollBtn">+ Add roll</button>
+          <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
           <button class="good" id="exportBtn">Export JSON</button>
           <button id="importBtn">Import JSON</button>
           <button class="danger" id="clearBtn">Clear session</button>
@@ -300,13 +351,13 @@
           <table>
             <thead>
               <tr>
-                <th style="width:90px;">Type</th>
+                <th style="width:120px;">Fav / Type</th>
                 <th>Weapon</th>
                 <th>Element</th>
                 <th style="width:70px;">Roll</th>
                 <th>Details</th>
                 <th>Notes</th>
-                <th class="right" style="width:110px;">Actions</th>
+                <th class="right" style="width:160px;">Actions</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -326,7 +377,7 @@
 
 <script>
 (() => {
-  // --- Data lists (yours) ---
+  // --- Data lists ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
@@ -340,7 +391,7 @@
     "Blangongas Spirit","Gore Magalas Tyranny","Arkvelds Hunger","Xu Wus Vigor","Fulgur Anjanaths Will",
     "Mizutsunes Prowess","Zoh Shias Pulse","Blossomdance Prayer","Sergio’s Tenacity","Leviathans Fury",
     "Flamefete Prayer","Soul of the Dark Knight","Omega Resonance","Dreamspell Prayer",
-    "Gogpocalypse","Lumenhymn Prayer"
+    "Gogmapocalypse","Lumenhymn Prayer"
   ];
 
   const GROUP_SKILLS = [
@@ -357,8 +408,8 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // --- Session storage key (bump version to avoid old data shape issues) ---
-  const KEY = "Gog_tracker_session_v1_2";
+  // --- Storage key (bump version) ---
+  const KEY = "gog_tracker_session_v1_3";
 
   // --- Helpers ---
   const $ = (id) => document.getElementById(id);
@@ -386,6 +437,10 @@
     try {
       const parsed = JSON.parse(raw);
       if (!parsed.rows || !parsed.counters) throw new Error("bad shape");
+      // Normalize older rows that might not have fav
+      for (const r of parsed.rows) {
+        if (typeof r.fav !== "boolean") r.fav = false;
+      }
       return parsed;
     } catch {
       return { rows: [], counters: {} };
@@ -398,6 +453,17 @@
 
   function comboKey(type, weapon, element) {
     return `${type}||${weapon}||${element}`;
+  }
+
+  // Rebuild counters from rows (max roll per combo).
+  // This makes deletes/renumbers totally safe.
+  function rebuildCounters(state) {
+    const counters = {};
+    for (const r of state.rows) {
+      const k = comboKey(r.type, r.weapon, r.element);
+      counters[k] = Math.max(counters[k] || 0, Number(r.roll) || 0);
+    }
+    state.counters = counters;
   }
 
   function nextRollNumber(state, type, weapon, element) {
@@ -449,10 +515,88 @@
     ].filter(v => v && v.trim().length > 0);
   }
 
-  function clearReinforcementSelections() {
-    ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
-      $(id).value = "";
+  function setReinforcementSelections(list) {
+    const arr = Array.isArray(list) ? list : [];
+    const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
+    ids.forEach((id, idx) => {
+      $(id).value = arr[idx] || "";
     });
+  }
+
+  function clearReinforcementSelections() {
+    setReinforcementSelections([]);
+  }
+
+  // --- Edit state ---
+  let editingId = null;
+
+  function setEditingMode(on, row=null) {
+    editingId = on ? (row ? row.id : editingId) : null;
+
+    // Lock/unlock combo selectors during edit
+    const lock = !!editingId;
+    $("rollType").disabled = lock;
+    $("weapon").disabled = lock;
+    $("element").disabled = lock;
+
+    $("cancelEditBtn").style.display = lock ? "" : "none";
+    $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
+
+    const banner = $("editBanner");
+    if (!lock) {
+      banner.style.display = "none";
+      return;
+    }
+    banner.style.display = "";
+    $("editBannerRoll").textContent = `#${row.roll}`;
+    $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
+  }
+
+  function resetInputs() {
+    $("notes").value = "";
+    $("setBonus").value = "";
+    $("groupSkill").value = "";
+    clearReinforcementSelections();
+  }
+
+  function populateFormFromRow(row) {
+    $("rollType").value = row.type;
+    $("weapon").value = row.weapon;
+    $("element").value = row.element;
+
+    // Show correct field group
+    $("skillsFields").style.display = (row.type === "skills") ? "" : "none";
+    $("reinforceFields").style.display = (row.type === "reinforce") ? "" : "none";
+
+    $("notes").value = row.notes || "";
+
+    if (row.type === "skills") {
+      $("setBonus").value = row.setBonus || "";
+      $("groupSkill").value = row.groupSkill || "";
+      clearReinforcementSelections();
+    } else {
+      $("setBonus").value = "";
+      $("groupSkill").value = "";
+      setReinforcementSelections(row.reinforcements || []);
+    }
+  }
+
+  // --- Deleting with roll-collapse ---
+  function deleteRowAndCollapse(state, targetRow) {
+    // Remove target
+    state.rows = state.rows.filter(r => r.id !== targetRow.id);
+
+    // Collapse roll numbers within same combo (type+weapon+element)
+    const k = comboKey(targetRow.type, targetRow.weapon, targetRow.element);
+    for (const r of state.rows) {
+      const rk = comboKey(r.type, r.weapon, r.element);
+      if (rk === k && Number(r.roll) > Number(targetRow.roll)) {
+        r.roll = Number(r.roll) - 1;
+      }
+    }
+
+    // Ensure counters match latest reality
+    rebuildCounters(state);
   }
 
   // --- Render ---
@@ -464,6 +608,7 @@
     const reinfText = (row.reinforcements || []).join(" ");
 
     const hay = [
+      row.fav ? "fav" : "",
       row.type, row.weapon, row.element, row.roll,
       row.setBonus, row.groupSkill,
       reinfText,
@@ -509,9 +654,11 @@
     $("kpiCombo").textContent = `This combo: ${comboCount}`;
     $("kpiCombos").textContent = `Combos: ${uniqueComboCount(state)}`;
 
-    const hint = type === "skills"
-      ? `Next roll for ${weapon} (${element}) Weapon Skills will be roll #${comboCount + 1}.`
-      : `Next roll for ${weapon} (${element}) Reinforcement will be roll #${comboCount + 1}.`;
+    const hint = editingId
+      ? `Editing mode: press “Save edit” when you're done.`
+      : (type === "skills"
+        ? `Next roll for ${weapon} (${element}) Weapon Skills will be roll #${comboCount + 1}.`
+        : `Next roll for ${weapon} (${element}) Reinforcement will be roll #${comboCount + 1}.`);
     $("rollHint").textContent = hint;
 
     const fText = $("filterText").value;
@@ -528,9 +675,14 @@
       const tr = document.createElement("tr");
 
       const tdType = document.createElement("td");
-      tdType.innerHTML = row.type === "skills"
-        ? `<span class="tag">Skills</span>`
-        : `<span class="tag">Reinf</span>`;
+      tdType.innerHTML = `
+        <div class="typeCell">
+          <button class="starBtn" data-act="star" data-id="${row.id}" title="Toggle favorite">
+            ${row.fav ? "★" : "☆"}
+          </button>
+          <span class="tag">${row.type === "skills" ? "Skills" : "Reinf"}</span>
+        </div>
+      `;
       tr.appendChild(tdType);
 
       const tdW = document.createElement("td");
@@ -571,6 +723,7 @@
       tdA.className = "right";
       tdA.innerHTML = `
         <div class="actions" style="justify-content:flex-end;">
+          <button data-act="edit" data-id="${row.id}" title="Edit">Edit</button>
           <button data-act="dup" data-id="${row.id}" title="Duplicate">Dup</button>
           <button class="danger" data-act="del" data-id="${row.id}" title="Delete">Del</button>
         </div>
@@ -586,13 +739,11 @@
   makeOptions($("element"), ELEMENTS);
   makeOptions($("setBonus"), SET_BONUS, { placeholder: "Select set bonus..." });
   makeOptions($("groupSkill"), GROUP_SKILLS, { placeholder: "Select group skill..." });
-
-  // 5 dropdowns (allow blank)
   ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
     makeOptions($(id), REINFORCEMENTS, { placeholder: "Select reinforcement..." });
   });
 
-  // --- Session id label (for vibes) ---
+  // --- Session id label ---
   const sessionId = nowId().slice(0,8);
   $("sessionPill").textContent = `Session: ${sessionId}`;
 
@@ -610,42 +761,77 @@
     $(id).addEventListener("change", render);
   });
 
-  // --- Add roll ---
+  // --- Add roll / Save edit ---
   $("addRollBtn").addEventListener("click", () => {
     const state = loadState();
+
     const type = $("rollType").value;
     const weapon = $("weapon").value;
     const element = $("element").value;
 
+    if (editingId) {
+      // Save edit
+      const idx = state.rows.findIndex(r => r.id === editingId);
+      if (idx === -1) {
+        setEditingMode(false);
+        render();
+        return;
+      }
+
+      const row = state.rows[idx];
+      row.notes = $("notes").value.trim();
+
+      if (row.type === "skills") {
+        row.setBonus = $("setBonus").value;
+        row.groupSkill = $("groupSkill").value;
+      } else {
+        row.reinforcements = getReinforcementSelections();
+      }
+
+      // Keep counters sane
+      rebuildCounters(state);
+      saveState(state);
+
+      setEditingMode(false);
+      resetInputs();
+      render();
+      return;
+    }
+
+    // Normal add roll
     const roll = nextRollNumber(state, type, weapon, element);
 
     const row = {
       id: nowId(),
       createdAt: Date.now(),
       type, weapon, element, roll,
-      notes: $("notes").value.trim()
+      notes: $("notes").value.trim(),
+      fav: false
     };
 
     if (type === "skills") {
       row.setBonus = $("setBonus").value;
       row.groupSkill = $("groupSkill").value;
     } else {
-      row.reinforcements = getReinforcementSelections(); // up to 5
+      row.reinforcements = getReinforcementSelections();
     }
 
     state.rows.push(row);
+    // counters already advanced by nextRollNumber
     saveState(state);
 
-    // Clear per-roll fields
-    $("notes").value = "";
-    $("setBonus").value = "";
-    $("groupSkill").value = "";
-    clearReinforcementSelections();
-
+    resetInputs();
     render();
   });
 
-  // --- Table actions (delete / duplicate) ---
+  // --- Cancel edit ---
+  $("cancelEditBtn").addEventListener("click", () => {
+    setEditingMode(false);
+    resetInputs();
+    render();
+  });
+
+  // --- Table actions ---
   $("tbody").addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
@@ -658,17 +844,44 @@
     const idx = state.rows.findIndex(r => r.id === id);
     if (idx === -1) return;
 
+    const row = state.rows[idx];
+
+    if (act === "star") {
+      row.fav = !row.fav;
+      saveState(state);
+      render();
+      return;
+    }
+
+    if (act === "edit") {
+      // If already editing something else, just switch editing target
+      populateFormFromRow(row);
+      setEditingMode(true, row);
+      render();
+      return;
+    }
+
     if (act === "del") {
-      state.rows.splice(idx, 1);
+      if (editingId === id) {
+        setEditingMode(false);
+        resetInputs();
+      }
+      deleteRowAndCollapse(state, row);
       saveState(state);
       render();
       return;
     }
 
     if (act === "dup") {
-      const src = state.rows[idx];
-      const roll = nextRollNumber(state, src.type, src.weapon, src.element);
-      const copy = { ...src, id: nowId(), createdAt: Date.now(), roll };
+      // Duplicate into same combo, next roll number
+      const roll = nextRollNumber(state, row.type, row.weapon, row.element);
+      const copy = {
+        ...row,
+        id: nowId(),
+        createdAt: Date.now(),
+        roll,
+        fav: row.fav // copy the star too (you clearly liked it)
+      };
       state.rows.push(copy);
       saveState(state);
       render();
@@ -680,7 +893,7 @@
   $("exportBtn").addEventListener("click", () => {
     const state = loadState();
     const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-    download(`Gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
+    download(`gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
   });
 
   $("importBtn").addEventListener("click", async () => {
@@ -693,8 +906,20 @@
       try{
         const txt = await readFileAsText(file);
         const parsed = JSON.parse(txt);
-        if (!parsed.rows || !parsed.counters) throw new Error("Invalid file format");
+        if (!parsed.rows) throw new Error("Invalid file format");
+
+        // Normalize and rebuild counters
+        for (const r of parsed.rows) {
+          if (typeof r.fav !== "boolean") r.fav = false;
+        }
+        parsed.counters = parsed.counters || {};
+        rebuildCounters(parsed);
+
         sessionStorage.setItem(KEY, JSON.stringify(parsed));
+
+        // Exit edit if any
+        setEditingMode(false);
+        resetInputs();
         render();
       }catch(err){
         alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
@@ -706,6 +931,8 @@
   $("clearBtn").addEventListener("click", () => {
     if (!confirm("Clear this session? This wipes the table + roll counters for this tab.")) return;
     sessionStorage.removeItem(KEY);
+    setEditingMode(false);
+    resetInputs();
     render();
   });
 
