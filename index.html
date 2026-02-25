@@ -112,6 +112,13 @@
     button.ghost{
       background: rgba(0,0,0,.15);
     }
+    button.danger{
+      background: rgba(231,76,60,.12);
+      border-color: rgba(231,76,60,.45);
+    }
+    button.danger:hover{
+      border-color: rgba(231,76,60,.8);
+    }
     button:disabled{
       opacity:.45;
       cursor:not-allowed;
@@ -484,7 +491,8 @@
               </div>
               <div class="col" style="min-width:220px; align-self:end;">
                 <button class="primary" id="optBtn">Optimize</button>
-                <button class="ghost" id="optClearBtn">Clear</button>
+                <!-- ✅ Changed: Clear is now a full reset -->
+                <button class="danger" id="optClearBtn">Clear (Reset)</button>
               </div>
             </div>
           </div>
@@ -533,7 +541,6 @@
 
 <script>
 (() => {
-  // --- base lists (your originals) ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
@@ -561,7 +568,6 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  // --- sorted copies for dropdowns (alphabetical) ---
   const SORT = (arr) => arr.slice().sort((a,b)=> String(a).localeCompare(String(b), undefined, { sensitivity:"base" }));
   const WEAPONS_SORTED = SORT(WEAPONS);
   const ELEMENTS_SORTED = SORT(ELEMENTS);
@@ -569,7 +575,7 @@
   const GROUP_SKILLS_SORTED = SORT(GROUP_SKILLS);
   const REINFORCEMENTS_SORTED = SORT(REINFORCEMENTS);
 
-  const KEY = "gog_tracker_session_v2_alpha_sorted";
+  const KEY = "gog_tracker_session_v2_reset_button";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -1013,6 +1019,35 @@
     out.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
+  function resetAllForCurrentView() {
+    const type = $("rollType").value;
+    const label = (type === "skills") ? "Weapon Skills" : "Reinforcements";
+    const ok = confirm(`Clear ALL ${label} rolls for this session? This cannot be undone.`);
+    if (!ok) return;
+
+    const state = loadState();
+    state.rows = state.rows.filter(r => r.type !== type); // wipe only this seed/view
+    rebuildCounters(state);
+    saveState(state);
+
+    // Clear optimized output too
+    $("optOut").style.display = "none";
+    $("optOut").innerHTML = "";
+    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+
+    // Exit edit mode if they were editing something we just nuked
+    editingId = null;
+    $("cancelEditBtn").style.display = "none";
+    $("addRollBtn").textContent = "+ Add roll";
+    $("editBanner").style.display = "none";
+    $("rollType").disabled = false;
+    $("weapon").disabled = false;
+    $("element").disabled = false;
+
+    resetInputs();
+    render();
+  }
+
   function wireEvents() {
     $("rollType").addEventListener("change", () => {
       const t = $("rollType").value;
@@ -1112,11 +1147,9 @@
     });
 
     $("optBtn").addEventListener("click", renderOptimize);
-    $("optClearBtn").addEventListener("click", () => {
-      $("optOut").style.display = "none";
-      $("optOut").innerHTML = "";
-      $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-    });
+
+    // ✅ NEW: clear resets all rolls for current view/seed too
+    $("optClearBtn").addEventListener("click", resetAllForCurrentView);
 
     $("exportBtn").addEventListener("click", () => {
       const state = loadState();
@@ -1158,7 +1191,6 @@
   }
 
   function init() {
-    // ✅ Dropdowns now alphabetical
     makeOptions($("weapon"), WEAPONS_SORTED, null);
     makeOptions($("element"), ELEMENTS_SORTED, null);
     makeOptions($("setBonus"), SET_BONUS_SORTED, "Select set bonus...");
@@ -1168,8 +1200,6 @@
     });
 
     $("sessionPill").textContent = `Session: ${nowId().slice(0,8)}`;
-
-    // ✅ Default sort: oldest first
     $("sortMode").value = "oldest";
 
     const t = $("rollType").value;
@@ -1180,6 +1210,25 @@
     wireEvents();
     updateAddButtonState();
     render();
+  }
+
+  // small helper to exit edit mode cleanly
+  function setEditingMode(on, row=null) {
+    editingId = on ? (row ? row.id : editingId) : null;
+
+    const lock = !!editingId;
+    $("rollType").disabled = lock;
+    $("weapon").disabled = lock;
+    $("element").disabled = lock;
+
+    $("cancelEditBtn").style.display = lock ? "" : "none";
+    $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
+
+    const banner = $("editBanner");
+    if (!lock) { banner.style.display = "none"; return; }
+    banner.style.display = "";
+    $("editBannerRoll").textContent = `#${row.roll}`;
+    $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
   }
 
   init();
