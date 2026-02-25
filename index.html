@@ -112,16 +112,11 @@
     button.ghost{
       background: rgba(0,0,0,.15);
     }
-    button.danger{
-      background: rgba(231,76,60,.10);
-      border-color: rgba(231,76,60,.35);
-    }
     button:disabled{
       opacity:.45;
       cursor:not-allowed;
       transform:none !important;
     }
-
     .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
     .kpi{
       display:flex; gap:10px; flex-wrap:wrap;
@@ -137,7 +132,6 @@
       background: rgba(0,0,0,.25);
     }
 
-    /* TABLE */
     .tableShell{
       border:1px solid var(--line);
       border-radius:14px;
@@ -287,14 +281,6 @@
       color:var(--text);
     }
 
-    /* single edit button in table */
-    .btnSmall{
-      padding:8px 10px;
-      border-radius:12px;
-      font-weight:800;
-      white-space:nowrap;
-    }
-
     footer{
       max-width:1200px;
       margin:16px auto 0;
@@ -331,12 +317,12 @@
     th.col-weapon, td.col-weapon{ width:140px; }
     th.col-element, td.col-element{ width:110px; }
     th.col-roll, td.col-roll{ width:80px; }
-    th.col-actions, td.col-actions{ width:120px; }
+    th.col-actions, td.col-actions{ width:110px; }
     @media(max-width: 640px){
       th.col-weapon, td.col-weapon{ width:120px; }
       th.col-element, td.col-element{ width:95px; }
       th.col-mark, td.col-mark{ width:105px; }
-      th.col-actions, td.col-actions{ width:110px; }
+      th.col-actions, td.col-actions{ width:96px; }
     }
   </style>
 </head>
@@ -547,6 +533,7 @@
 
 <script>
 (() => {
+  // --- base lists (your originals) ---
   const WEAPONS = [
     "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
     "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
@@ -574,7 +561,15 @@
     "Sharpness I","Sharpness II","Sharpness EX"
   ];
 
-  const KEY = "gog_tracker_session_v1_9_edit_only";
+  // --- sorted copies for dropdowns (alphabetical) ---
+  const SORT = (arr) => arr.slice().sort((a,b)=> String(a).localeCompare(String(b), undefined, { sensitivity:"base" }));
+  const WEAPONS_SORTED = SORT(WEAPONS);
+  const ELEMENTS_SORTED = SORT(ELEMENTS);
+  const SET_BONUS_SORTED = SORT(SET_BONUS);
+  const GROUP_SKILLS_SORTED = SORT(GROUP_SKILLS);
+  const REINFORCEMENTS_SORTED = SORT(REINFORCEMENTS);
+
+  const KEY = "gog_tracker_session_v2_alpha_sorted";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -676,6 +671,7 @@
     const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
     ids.forEach((id, i) => $(id).value = (list && list[i]) ? list[i] : "");
   }
+
   function clearReinf() { setReinf([]); }
 
   let editingId = null;
@@ -703,6 +699,23 @@
     $("groupSkill").value = "";
     clearReinf();
     $("mark").value = "";
+  }
+
+  function syncViewUI(type) {
+    $("rightTitle").textContent = (type === "skills")
+      ? "Skills Seed — Roadmap + Table"
+      : "Reinforcement Seed — Roadmap + Table";
+    $("optPill").textContent = (type === "skills")
+      ? "Optimize Skills Rolls"
+      : "Optimize Reinforcement Rolls";
+    $("filterText").placeholder = (type === "skills")
+      ? "Search skills view..."
+      : "Search reinforcement view...";
+    $("viewPill").textContent = (type === "skills") ? "View: Skills" : "View: Reinf";
+
+    $("optOut").style.display = "none";
+    $("optOut").innerHTML = "";
+    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
   }
 
   function populateFormFromRow(row) {
@@ -822,23 +835,6 @@
     return copy;
   }
 
-  function syncViewUI(type) {
-    $("rightTitle").textContent = (type === "skills")
-      ? "Skills Seed — Roadmap + Table"
-      : "Reinforcement Seed — Roadmap + Table";
-    $("optPill").textContent = (type === "skills")
-      ? "Optimize Skills Rolls"
-      : "Optimize Reinforcement Rolls";
-    $("filterText").placeholder = (type === "skills")
-      ? "Search skills view..."
-      : "Search reinforcement view...";
-    $("viewPill").textContent = (type === "skills") ? "View: Skills" : "View: Reinf";
-
-    $("optOut").style.display = "none";
-    $("optOut").innerHTML = "";
-    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
-  }
-
   function validateInputs() {
     const type = $("rollType").value;
     const mark = $("mark").value;
@@ -937,9 +933,7 @@
 
       const tdA = document.createElement("td");
       tdA.className = "col-actions right";
-      tdA.innerHTML = `
-        <button class="btnSmall primary" data-act="edit" data-id="${row.id}">Edit</button>
-      `;
+      tdA.innerHTML = `<button class="primary" data-act="edit" data-id="${row.id}">Edit</button>`;
       tr.appendChild(tdA);
 
       tbody.appendChild(tr);
@@ -1102,14 +1096,11 @@
       render();
     });
 
-    // Only action now is Edit (all edits happen in the left panel)
     $("tbody").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-act]");
+      const btn = e.target.closest("button[data-act='edit']");
       if (!btn) return;
-
-      const act = btn.getAttribute("data-act");
       const id = btn.getAttribute("data-id");
-      if (act !== "edit" || !id) return;
+      if (!id) return;
 
       const state = loadState();
       const row = state.rows.find(r => r.id === id);
@@ -1167,16 +1158,18 @@
   }
 
   function init() {
-    makeOptions($("weapon"), WEAPONS, null);
-    makeOptions($("element"), ELEMENTS, null);
-    makeOptions($("setBonus"), SET_BONUS, "Select set bonus...");
-    makeOptions($("groupSkill"), GROUP_SKILLS, "Select group skill...");
+    // ✅ Dropdowns now alphabetical
+    makeOptions($("weapon"), WEAPONS_SORTED, null);
+    makeOptions($("element"), ELEMENTS_SORTED, null);
+    makeOptions($("setBonus"), SET_BONUS_SORTED, "Select set bonus...");
+    makeOptions($("groupSkill"), GROUP_SKILLS_SORTED, "Select group skill...");
     ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
-      makeOptions($(id), REINFORCEMENTS, "Select reinforcement...");
+      makeOptions($(id), REINFORCEMENTS_SORTED, "Select reinforcement...");
     });
 
     $("sessionPill").textContent = `Session: ${nowId().slice(0,8)}`;
 
+    // ✅ Default sort: oldest first
     $("sortMode").value = "oldest";
 
     const t = $("rollType").value;
