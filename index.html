@@ -125,6 +125,15 @@
       transform:none !important;
     }
 
+    /* ⚡ Quick Dud button */
+    .quickDud{
+      width:100%;
+      margin-top:10px;
+      padding:14px;
+      font-size:15px;
+      letter-spacing:.4px;
+    }
+
     .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
     .kpi{
       display:flex; gap:10px; flex-wrap:wrap;
@@ -467,6 +476,9 @@
                 <span>Dud</span>
               </label>
             </div>
+
+            <!-- ⚡ One-tap Dud: records instantly, no selector / no Add Roll click -->
+            <button class="danger quickDud" id="quickDudBtn">⚡ QUICK DUD</button>
           </div>
 
           <div class="btns">
@@ -614,7 +626,7 @@
   const GROUP_SKILLS_SORTED = SORT(GROUP_SKILLS);
   const REINFORCEMENTS_SORTED = SORT(REINFORCEMENTS);
 
-  const KEY = "gog_tracker_session_v3_fast_duds";
+  const KEY = "gog_tracker_session_v4_quick_dud";
   const $ = (id) => document.getElementById(id);
   const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
@@ -1152,6 +1164,37 @@
     render();
   }
 
+  // ⚡ One tap = one dud roll recorded. Skips the Fav/Dud selector AND Add Roll.
+  // Uses the same nextRollNumber() counter as Add Roll, so numbering stays in sync.
+  // Does NOT touch the form fields, so any half-filled Fav input survives.
+  function quickAddDud() {
+    const type = $("rollType").value;
+    const weapon = $("weapon").value;
+    const element = $("element").value;
+
+    const state = loadState();
+    const roll = nextRollNumber(state, type, weapon, element);
+
+    const row = {
+      id: nowId(),
+      createdAt: Date.now(),
+      type, weapon, element, roll,
+      mark: "dud",
+      setBonus: "",
+      groupSkill: "",
+      reinforcements: []
+    };
+
+    state.rows.push(row);
+    saveState(state);
+    render();
+
+    // Flash feedback so you know it landed without reading the table
+    const btn = $("quickDudBtn");
+    btn.textContent = `✓ Dud #${roll} added`;
+    setTimeout(() => { btn.textContent = "⚡ QUICK DUD"; }, 600);
+  }
+
   function wireEvents() {
     $("rollType").addEventListener("change", () => {
       const t = $("rollType").value;
@@ -1177,6 +1220,9 @@
         updateAddButtonState();
       });
     });
+
+    // ⚡ Quick Dud wiring
+    $("quickDudBtn").addEventListener("click", quickAddDud);
 
     $("addRollBtn").addEventListener("click", () => {
       const v = validateInputs();
