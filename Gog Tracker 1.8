@@ -1,0 +1,1387 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gog Roll Tracker</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --text:#e7eef7; --muted:#9bb0c6;
+      --line:#233244; --accent:#1f81c4; --good:#2ecc71; --warn:#f1c40f; --bad:#e74c3c;
+      --radius:14px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; padding:22px;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 10% -10%, rgba(31,129,196,.35), transparent 60%),
+                  radial-gradient(900px 600px at 95% 0%, rgba(46,204,113,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    .topbar{
+      max-width:1200px;
+      margin:0 auto 14px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    h1{ margin:0; font-size:22px; letter-spacing:.2px; }
+    .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.45; max-width:860px; }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(0,0,0,.25);
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    .wrap{ max-width:1200px; margin:0 auto; }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+    @media(min-width: 980px){
+      .grid{ grid-template-columns: 420px 1fr; align-items:start; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 12px;
+      background: rgba(255,255,255,.02);
+      border-bottom:1px solid var(--line);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .card .bd{ padding:14px; }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    select, input[type="text"]{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    .col{ flex:1 1 160px; min-width:160px; }
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    button{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+      font-weight:700;
+    }
+    button:hover{ border-color: rgba(31,129,196,.8); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(31,129,196,.18);
+      border-color: rgba(31,129,196,.55);
+    }
+    button.good{
+      background: rgba(46,204,113,.12);
+      border-color: rgba(46,204,113,.45);
+    }
+    button.warn{
+      background: rgba(241,196,15,.10);
+      border-color: rgba(241,196,15,.35);
+    }
+    button.ghost{
+      background: rgba(0,0,0,.15);
+    }
+    button.danger{
+      background: rgba(231,76,60,.12);
+      border-color: rgba(231,76,60,.45);
+    }
+    button.danger:hover{
+      border-color: rgba(231,76,60,.8);
+    }
+    button:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+
+    /* ⚡ Quick Dud button */
+    .quickDud{
+      width:100%;
+      margin-top:10px;
+      padding:14px;
+      font-size:15px;
+      letter-spacing:.4px;
+    }
+
+    .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.45; }
+    .kpi{
+      display:flex; gap:10px; flex-wrap:wrap;
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:12px;
+      margin-top:12px;
+    }
+    .kpi span{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      background: rgba(0,0,0,.25);
+    }
+
+    .tableShell{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.10);
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      table-layout:fixed;
+      border:none;
+    }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+      border-bottom:1px solid var(--line);
+      padding:10px 10px;
+      position:sticky; top:0;
+      z-index:1;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(35,50,68,.55);
+      vertical-align:top;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    tbody tr:hover td{ background: rgba(31,129,196,.06); }
+
+    .tiny{ font-size:12px; color:var(--muted); }
+    .mono{ font-family:var(--mono); }
+    .right{ text-align:right; }
+
+    .badge{
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      display:inline-block;
+      max-width:100%;
+    }
+    .badge.fav{
+      border-color: rgba(46,204,113,.55);
+      background: rgba(46,204,113,.10);
+      color: #b9f6cf;
+    }
+    .badge.dud{
+      border-color: rgba(155,176,198,.45);
+      background: rgba(155,176,198,.08);
+      color: var(--muted);
+    }
+    .conflictRow td{
+      background: rgba(231,76,60,.10) !important;
+      border-bottom-color: rgba(231,76,60,.35);
+    }
+
+    .editBanner{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px solid rgba(241,196,15,.35);
+      background: rgba(241,196,15,.08);
+      border-radius:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+      display:none;
+    }
+    .editBanner strong{ color:var(--text); }
+
+    .split{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .search{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:end;
+    }
+    .search .col{ min-width:220px; }
+
+    .optWrap{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .optTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .optOut{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .optOut .line{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(35,50,68,.55);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      justify-content:space-between;
+      background: rgba(0,0,0,.10);
+    }
+    .optOut .line:last-child{ border-bottom:none; }
+    .optOut .left{
+      display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .optOut .rollN{
+      font-family:var(--mono);
+      color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:4px 8px;
+      background: rgba(0,0,0,.18);
+      min-width:120px;
+      text-align:center;
+    }
+    .optOut .desc{
+      color:var(--text);
+      line-height:1.35;
+      max-width:760px;
+    }
+    .optOut .desc .tiny{ display:block; margin-top:4px; }
+    .optOut .conflict{
+      background: rgba(231,76,60,.12);
+      border-bottom-color: rgba(231,76,60,.35);
+    }
+    .optOut .conflict .rollN{
+      border-color: rgba(231,76,60,.55);
+      background: rgba(231,76,60,.10);
+      color: #ffd0cb;
+    }
+    .optOut ul{
+      margin:6px 0 0 18px;
+      padding:0;
+      color:var(--text);
+    }
+
+    .radioGroup{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:2px;
+    }
+    .radioCard{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(0,0,0,.20);
+      cursor:pointer;
+      user-select:none;
+      transition: border-color .15s ease, background .15s ease, transform .06s ease;
+    }
+    .radioCard:hover{ border-color: rgba(31,129,196,.6); }
+    .radioCard:active{ transform: translateY(1px); }
+    .radioCard input{
+      width:auto;
+      margin:0;
+      accent-color: var(--accent);
+    }
+    .radioCard.activeFav{
+      border-color: rgba(46,204,113,.55);
+      background: rgba(46,204,113,.10);
+    }
+    .radioCard.activeDud{
+      border-color: rgba(155,176,198,.45);
+      background: rgba(155,176,198,.08);
+    }
+
+    .fieldsDisabled{
+      opacity:.45;
+      pointer-events:none;
+      filter:saturate(.7);
+    }
+
+    footer{
+      max-width:1200px;
+      margin:16px auto 0;
+      padding-top:16px;
+      border-top:1px solid rgba(35,50,68,.55);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-align:center;
+    }
+    footer img{
+      height:36px;
+      width:auto;
+      display:block;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+      opacity:.95;
+    }
+    footer a{
+      color:var(--muted);
+      text-decoration:none;
+      border-bottom:1px dashed rgba(155,176,198,.35);
+    }
+    footer a:hover{
+      color:var(--text);
+      border-bottom-color: rgba(231,238,247,.55);
+    }
+
+    th.col-mark, td.col-mark{ width:110px; }
+    th.col-weapon, td.col-weapon{ width:140px; }
+    th.col-element, td.col-element{ width:110px; }
+    th.col-roll, td.col-roll{ width:80px; }
+    th.col-actions, td.col-actions{ width:110px; }
+    @media(max-width: 640px){
+      th.col-weapon, td.col-weapon{ width:120px; }
+      th.col-element, td.col-element{ width:95px; }
+      th.col-mark, td.col-mark{ width:105px; }
+      th.col-actions, td.col-actions{ width:96px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Gog Roll Tracker</h1>
+      <div class="sub">
+        Weapon Skills and Reinforcement use different seeds. This UI keeps them in separate views so you don’t mix timelines.
+      </div>
+    </div>
+    <div class="pill mono" id="sessionPill">Session</div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <div class="hd">
+          <div class="pill">Roll input</div>
+          <div class="pill" id="viewPill">View: Skills</div>
+        </div>
+        <div class="bd">
+          <div class="row">
+            <div class="col">
+              <label>View / Roll type</label>
+              <select id="rollType">
+                <option value="skills">Weapon Skills seed</option>
+                <option value="reinforce">Reinforcement seed</option>
+              </select>
+            </div>
+            <div class="col">
+              <label>Weapon</label>
+              <select id="weapon"></select>
+            </div>
+            <div class="col">
+              <label>Element</label>
+              <select id="element"></select>
+            </div>
+          </div>
+
+          <div class="editBanner" id="editBanner">
+            Editing roll <strong id="editBannerRoll">#?</strong> for <strong id="editBannerCombo">?</strong>.
+            (Weapon/Element/Type are locked while editing.)
+          </div>
+
+          <div class="row" id="skillsFields" style="margin-top:10px;">
+            <div class="col">
+              <label>Set bonus</label>
+              <select id="setBonus"></select>
+            </div>
+            <div class="col">
+              <label>Group skill</label>
+              <select id="groupSkill"></select>
+            </div>
+          </div>
+
+          <div id="reinforceFields" style="margin-top:10px; display:none;">
+            <div class="row">
+              <div class="col">
+                <label>Reinforcement 1</label>
+                <select id="reinforcement1"></select>
+              </div>
+              <div class="col">
+                <label>Reinforcement 2</label>
+                <select id="reinforcement2"></select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div class="col">
+                <label>Reinforcement 3</label>
+                <select id="reinforcement3"></select>
+              </div>
+              <div class="col">
+                <label>Reinforcement 4</label>
+                <select id="reinforcement4"></select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div class="col">
+                <label>Reinforcement 5</label>
+                <select id="reinforcement5"></select>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Mark this roll</label>
+            <div class="radioGroup">
+              <label class="radioCard" id="favCard">
+                <input type="radio" name="markRadio" id="markFav" value="fav">
+                <span>Fav</span>
+              </label>
+              <label class="radioCard" id="dudCard">
+                <input type="radio" name="markRadio" id="markDud" value="dud">
+                <span>Dud</span>
+              </label>
+            </div>
+
+            <!-- ⚡ One-tap Dud: records instantly, no selector / no Add Roll click -->
+            <button class="danger quickDud" id="quickDudBtn">⚡ QUICK DUD</button>
+          </div>
+
+          <div class="btns">
+            <button class="primary" id="addRollBtn" disabled>+ Add roll</button>
+            <button class="warn" id="cancelEditBtn" style="display:none;">Cancel edit</button>
+            <button class="good" id="exportBtn">Export JSON</button>
+            <button id="importBtn">Import JSON</button>
+          </div>
+
+          <div class="hint" id="rollHint"></div>
+          <div class="hint" id="validationHint"></div>
+
+          <div class="kpi">
+            <span id="kpiTotal">Total: 0</span>
+            <span id="kpiCombo">This combo: 0</span>
+            <span id="kpiCombos">Combos: 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd">
+          <div class="split" style="width:100%;">
+            <div class="pill" id="rightTitle">Skills Seed — Roadmap + Table</div>
+            <div class="search">
+              <div class="col">
+                <label>Filter (text)</label>
+                <input id="filterText" placeholder="Search skills view..." />
+              </div>
+              <div class="col">
+                <label>Filter mark</label>
+                <select id="filterMark">
+                  <option value="all">All</option>
+                  <option value="fav">Fav</option>
+                  <option value="dud">Dud</option>
+                </select>
+              </div>
+              <div class="col">
+                <label>Sort</label>
+                <select id="sortMode">
+                  <option value="oldest" selected>Oldest first</option>
+                  <option value="newest">Newest first</option>
+                  <option value="weapon">Weapon → Element → Roll</option>
+                  <option value="element">Element → Weapon → Roll</option>
+                  <option value="roll">Roll # (within combo)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="optWrap">
+          <div class="optTitle">
+            <div class="pill" id="optPill">Optimize Skills Rolls</div>
+            <div class="row" style="margin:0;">
+              <div class="col" style="min-width:220px;">
+                <label style="margin-bottom:6px;">Range</label>
+                <select id="optRange">
+                  <option value="toMaxFav">From roll 1 → max Fav roll</option>
+                  <option value="toMaxSeen">From roll 1 → max recorded roll</option>
+                </select>
+              </div>
+              <div class="col" style="min-width:220px; align-self:end;">
+                <button class="primary" id="optBtn">Optimize</button>
+                <button class="danger" id="optClearBtn">Clear (Reset)</button>
+              </div>
+            </div>
+          </div>
+          <div class="tiny" id="optSummary">Mark some rolls as Fav to generate a plan.</div>
+          <div class="optOut" id="optOut" style="display:none;"></div>
+        </div>
+
+        <div class="bd" style="padding:0;">
+          <div style="max-height:62vh; overflow:auto;">
+            <div class="tableShell">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="col-mark">Mark</th>
+                    <th class="col-weapon">Weapon</th>
+                    <th class="col-element">Element</th>
+                    <th class="col-roll">Roll</th>
+                    <th>Details</th>
+                    <th class="col-actions right">Edit</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="bd">
+            <div class="tiny">
+              Stored in <span class="mono">sessionStorage</span> (tab-only). Close tab = wipe.
+              Export JSON if you want to keep/share a batch.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <img
+      src="https://cdn-iledjic.nitrocdn.com/JlvojpVvcgHjATJNzbWXlCUCjRdUJyfe/assets/images/optimized/rev-2bf6543/idlekamidesign.co.uk/wp-content/uploads/Footer-Logo.webp"
+      alt="idlekamidesign.co.uk"
+      loading="lazy"
+    />
+    <div>© idlekamidesign.co.uk 2026</div>
+    <div><a href="https://idlekamidesign.co.uk" target="_blank" rel="noopener noreferrer">idlekamidesign.co.uk</a></div>
+  </footer>
+
+<script>
+(() => {
+  const WEAPONS = [
+    "Great Sword","Long Sword","Sword & Shield","Dual Blades","Hammer","Hunting Horn",
+    "Lance","Gunlance","Switch Axe","Charge Blade","Insect Glaive","Bow"
+  ];
+  const ELEMENTS = ["Fire","Water","Ice","Dragon","Thunder","Paralysis","Poison","Sleep","Blast"];
+
+  const SET_BONUS = [
+    "Doshagumas Might","Rey Daus Voltage","Ugh Dunas Cover","Nu Udras Mutiny","Rathalos Flare",
+    "Ebony Odogarons Power","Guardian Arkvelds Vitality","Jin Dahaads Revolt","Gravios Protection",
+    "Blangongas Spirit","Gore Magalas Tyranny","Arkvelds Hunger","Xu Wus Vigor","Fulgur Anjanaths Will",
+    "Mizutsunes Prowess","Zoh Shias Pulse","Blossomdance Prayer","Sergio’s Tenacity","Leviathans Fury",
+    "Flamefete Prayer","Soul of the Dark Knight","Omega Resonance","Dreamspell Prayer",
+    "Gogmapocalypse","Lumenhymn Prayer"
+  ];
+  const GROUP_SKILLS = [
+    "Scaling Prowess","Fortifying Pelt","Flexible Leathercraft","Neopteron Alert","Lords Favor",
+    "Guardians Pulse","Neopteron Camouflage","Buttery Leathercraft","Scale Layering","Alluring Pelt",
+    "Lords Fury","Guardians Protection","Imparted Wisdom","Glorys Favour","Festival Spirit",
+    "Lords Soul","Master of the Fist"
+  ];
+  const REINFORCEMENTS = [
+    "Attack Bonus I","Attack Bonus II","Attack Bonus III","Attack Bonus EX",
+    "Element Bonus I","Element Bonus II","Element Bonus III","Element Bonus EX",
+    "Affinity Bonus I","Affinity Bonus II","Affinity Bonus III","Affinity Bonus EX",
+    "Sharpness I","Sharpness II","Sharpness EX"
+  ];
+
+  const SORT = (arr) => arr.slice().sort((a,b)=> String(a).localeCompare(String(b), undefined, { sensitivity:"base" }));
+  const WEAPONS_SORTED = SORT(WEAPONS);
+  const ELEMENTS_SORTED = SORT(ELEMENTS);
+  const SET_BONUS_SORTED = SORT(SET_BONUS);
+  const GROUP_SKILLS_SORTED = SORT(GROUP_SKILLS);
+  const REINFORCEMENTS_SORTED = SORT(REINFORCEMENTS);
+
+  const KEY = "gog_tracker_session_v4_quick_dud";
+  const $ = (id) => document.getElementById(id);
+  const nowId = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+  function makeOptions(selectEl, list, placeholder=null) {
+    selectEl.innerHTML = "";
+    if (placeholder !== null) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = placeholder;
+      selectEl.appendChild(opt);
+    }
+    for (const item of list) {
+      const opt = document.createElement("option");
+      opt.value = item;
+      opt.textContent = item;
+      selectEl.appendChild(opt);
+    }
+  }
+
+  function comboKey(type, weapon, element) { return `${type}||${weapon}||${element}`; }
+
+  function rebuildCounters(state) {
+    const counters = {};
+    for (const r of state.rows) {
+      const k = comboKey(r.type, r.weapon, r.element);
+      counters[k] = Math.max(counters[k] || 0, Number(r.roll) || 0);
+    }
+    state.counters = counters;
+  }
+
+  function loadState() {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) return { rows: [], counters: {} };
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.rows) throw new Error("bad");
+      parsed.counters = parsed.counters || {};
+      for (const r of parsed.rows) {
+        if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
+        if (!Array.isArray(r.reinforcements)) r.reinforcements = [];
+      }
+      rebuildCounters(parsed);
+      return parsed;
+    } catch {
+      return { rows: [], counters: {} };
+    }
+  }
+
+  function saveState(state) { sessionStorage.setItem(KEY, JSON.stringify(state)); }
+
+  function nextRollNumber(state, type, weapon, element) {
+    const k = comboKey(type, weapon, element);
+    const n = (state.counters[k] || 0) + 1;
+    state.counters[k] = n;
+    return n;
+  }
+
+  function currentComboCount(state, type, weapon, element) {
+    return state.counters[comboKey(type, weapon, element)] || 0;
+  }
+
+  function uniqueComboCount(state) { return Object.keys(state.counters).length; }
+
+  function download(filename, text) {
+    const a = document.createElement("a");
+    a.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(text));
+    a.setAttribute("download", filename);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ""));
+      fr.onerror = reject;
+      fr.readAsText(file);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[s]));
+  }
+
+  function getReinf() {
+    return [
+      $("reinforcement1").value,
+      $("reinforcement2").value,
+      $("reinforcement3").value,
+      $("reinforcement4").value,
+      $("reinforcement5").value
+    ];
+  }
+
+  function setReinf(list) {
+    const ids = ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"];
+    ids.forEach((id, i) => $(id).value = (list && list[i]) ? list[i] : "");
+  }
+
+  function clearReinf() { setReinf([]); }
+
+  function getMark() {
+    if ($("markFav").checked) return "fav";
+    if ($("markDud").checked) return "dud";
+    return "";
+  }
+
+  function setMark(mark) {
+    $("markFav").checked = mark === "fav";
+    $("markDud").checked = mark === "dud";
+    syncMarkUI();
+  }
+
+  function clearMark() {
+    $("markFav").checked = false;
+    $("markDud").checked = false;
+    syncMarkUI();
+  }
+
+  function syncMarkUI() {
+    const mark = getMark();
+    $("favCard").classList.toggle("activeFav", mark === "fav");
+    $("dudCard").classList.toggle("activeDud", mark === "dud");
+
+    const type = $("rollType").value;
+
+    if (mark === "dud") {
+      if (type === "skills") {
+        $("setBonus").value = "";
+        $("groupSkill").value = "";
+        $("skillsFields").classList.add("fieldsDisabled");
+      } else {
+        clearReinf();
+        $("reinforceFields").classList.add("fieldsDisabled");
+      }
+    } else {
+      if (type === "skills") {
+        $("skillsFields").classList.remove("fieldsDisabled");
+      } else {
+        $("reinforceFields").classList.remove("fieldsDisabled");
+      }
+    }
+  }
+
+  let editingId = null;
+
+  function setEditingMode(on, row=null) {
+    editingId = on ? (row ? row.id : editingId) : null;
+
+    const lock = !!editingId;
+    $("rollType").disabled = lock;
+    $("weapon").disabled = lock;
+    $("element").disabled = lock;
+
+    $("cancelEditBtn").style.display = lock ? "" : "none";
+    $("addRollBtn").textContent = lock ? "Save edit" : "+ Add roll";
+
+    const banner = $("editBanner");
+    if (!lock) { banner.style.display = "none"; return; }
+    banner.style.display = "";
+    $("editBannerRoll").textContent = `#${row.roll}`;
+    $("editBannerCombo").textContent = `${row.weapon} (${row.element}) • ${row.type === "skills" ? "Skills" : "Reinf"}`;
+  }
+
+  function resetInputs() {
+    $("setBonus").value = "";
+    $("groupSkill").value = "";
+    clearReinf();
+    clearMark();
+  }
+
+  function syncViewUI(type) {
+    $("rightTitle").textContent = (type === "skills")
+      ? "Skills Seed — Roadmap + Table"
+      : "Reinforcement Seed — Roadmap + Table";
+    $("optPill").textContent = (type === "skills")
+      ? "Optimize Skills Rolls"
+      : "Optimize Reinforcement Rolls";
+    $("filterText").placeholder = (type === "skills")
+      ? "Search skills view..."
+      : "Search reinforcement view...";
+    $("viewPill").textContent = (type === "skills") ? "View: Skills" : "View: Reinf";
+
+    $("optOut").style.display = "none";
+    $("optOut").innerHTML = "";
+    $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+    syncMarkUI();
+  }
+
+  function populateFormFromRow(row) {
+    $("rollType").value = row.type;
+    $("weapon").value = row.weapon;
+    $("element").value = row.element;
+
+    $("skillsFields").style.display = (row.type === "skills") ? "" : "none";
+    $("reinforceFields").style.display = (row.type === "reinforce") ? "" : "none";
+
+    setMark(row.mark || "");
+
+    if (row.type === "skills") {
+      $("setBonus").value = row.setBonus || "";
+      $("groupSkill").value = row.groupSkill || "";
+      clearReinf();
+    } else {
+      $("setBonus").value = "";
+      $("groupSkill").value = "";
+      setReinf(row.reinforcements || []);
+    }
+
+    syncViewUI(row.type);
+    updateAddButtonState();
+  }
+
+  function computeFavConflicts(state, type) {
+    const byRoll = new Map();
+    for (const r of state.rows) {
+      if (r.type !== type) continue;
+      if (r.mark !== "fav") continue;
+      const roll = Number(r.roll);
+      if (!byRoll.has(roll)) byRoll.set(roll, []);
+      byRoll.get(roll).push(r);
+    }
+    const conflictIds = new Set();
+    let conflicts = 0;
+    for (const [roll, arr] of byRoll.entries()) {
+      if (arr.length > 1) {
+        conflicts++;
+        for (const r of arr) conflictIds.add(r.id);
+      }
+    }
+    return { byRoll, conflictIds, conflicts };
+  }
+
+  function buildOptimizePlan(state, type, rangeMode) {
+    const { byRoll, conflicts } = computeFavConflicts(state, type);
+
+    let maxRoll = 0;
+    if (rangeMode === "toMaxSeen") {
+      for (const r of state.rows) {
+        if (r.type !== type) continue;
+        maxRoll = Math.max(maxRoll, Number(r.roll) || 0);
+      }
+    } else {
+      for (const [roll] of byRoll.entries()) maxRoll = Math.max(maxRoll, roll);
+    }
+    if (maxRoll <= 0) return { maxRoll: 0, lines: [], conflicts: 0, favCount: 0 };
+
+    let favCount = 0;
+    for (const arr of byRoll.values()) favCount += arr.length;
+
+    const rawLines = [];
+    for (let roll = 1; roll <= maxRoll; roll++) {
+      const favs = byRoll.get(roll) || [];
+      if (!favs.length) rawLines.push({ start: roll, end: roll, kind:"dud", conflict:false });
+      else rawLines.push({ start: roll, end: roll, kind:"fav", conflict:(favs.length>1), favs });
+    }
+
+    const compressed = [];
+    for (const line of rawLines) {
+      const prev = compressed[compressed.length - 1];
+      if (
+        prev &&
+        prev.kind === "dud" &&
+        line.kind === "dud" &&
+        prev.end + 1 === line.start
+      ) {
+        prev.end = line.end;
+      } else {
+        compressed.push({ ...line });
+      }
+    }
+
+    return { maxRoll, lines: compressed, conflicts, favCount };
+  }
+
+  function describeRow(r) {
+    if (r.type === "skills") {
+      return `${r.weapon} / ${r.element} — Set: ${r.setBonus || "-"}, Group: ${r.groupSkill || "-"}`;
+    }
+    const list = (r.reinforcements || []);
+    return `${r.weapon} / ${r.element} — ${list.length ? list.join(", ") : "-"}`;
+  }
+
+  function matchesFilter(row, currentType, filterText, filterMark) {
+    if (row.type !== currentType) return false;
+
+    if (filterMark !== "all") {
+      if (filterMark === "fav" && row.mark !== "fav") return false;
+      if (filterMark === "dud" && row.mark !== "dud") return false;
+    }
+
+    const t = (filterText || "").trim().toLowerCase();
+    if (!t) return true;
+
+    const reinfText = (row.reinforcements || []).join(" ");
+    const hay = [
+      row.mark, row.weapon, row.element, row.roll,
+      row.setBonus, row.groupSkill, reinfText
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    return hay.includes(t);
+  }
+
+  function sortRows(rows, mode) {
+    const copy = rows.slice();
+    const cmpStr = (a,b) => String(a).localeCompare(String(b));
+    const cmpNum = (a,b) => Number(a) - Number(b);
+
+    if (mode === "oldest") return copy.sort((a,b) => cmpNum(a.createdAt, b.createdAt));
+    if (mode === "newest") return copy.sort((a,b) => cmpNum(b.createdAt, a.createdAt));
+    if (mode === "weapon") return copy.sort((a,b) =>
+      cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element) || cmpNum(a.roll,b.roll)
+    );
+    if (mode === "element") return copy.sort((a,b) =>
+      cmpStr(a.element,b.element) || cmpStr(a.weapon,b.weapon) || cmpNum(a.roll,b.roll)
+    );
+    if (mode === "roll") return copy.sort((a,b) =>
+      cmpNum(a.roll,b.roll) || cmpStr(a.weapon,b.weapon) || cmpStr(a.element,b.element)
+    );
+    return copy;
+  }
+
+  function validateInputs() {
+    const type = $("rollType").value;
+    const mark = getMark();
+
+    if (mark !== "dud" && mark !== "fav") {
+      return { ok:false, msg:"Choose Fav or Dud." };
+    }
+
+    if (mark === "dud") {
+      return { ok:true, msg:"" };
+    }
+
+    if (type === "skills") {
+      if (!$("setBonus").value) return { ok:false, msg:"Select a Set bonus." };
+      if (!$("groupSkill").value) return { ok:false, msg:"Select a Group skill." };
+      return { ok:true, msg:"" };
+    } else {
+      const picks = getReinf();
+      if (picks.some(v => !v)) return { ok:false, msg:"Select all 5 Reinforcements." };
+      return { ok:true, msg:"" };
+    }
+  }
+
+  function updateAddButtonState() {
+    const v = validateInputs();
+    $("addRollBtn").disabled = !v.ok;
+    $("validationHint").textContent = v.ok ? "" : v.msg;
+  }
+
+  function render() {
+    const state = loadState();
+    const viewType = $("rollType").value;
+
+    const weapon = $("weapon").value;
+    const element = $("element").value;
+
+    const comboCount = currentComboCount(state, viewType, weapon, element);
+    $("kpiTotal").textContent = `Total: ${state.rows.length}`;
+    $("kpiCombo").textContent = `This combo: ${comboCount}`;
+    $("kpiCombos").textContent = `Combos: ${uniqueComboCount(state)}`;
+
+    $("rollHint").textContent = editingId
+      ? `Editing mode: press “Save edit” when you're done.`
+      : (viewType === "skills"
+        ? `Next roll for ${weapon} (${element}) Skills will be roll #${comboCount + 1}.`
+        : `Next roll for ${weapon} (${element}) Reinf will be roll #${comboCount + 1}.`);
+
+    const { conflictIds } = computeFavConflicts(state, viewType);
+
+    const fText = $("filterText").value;
+    const fMark = $("filterMark").value;
+    const sMode = $("sortMode").value;
+
+    const filtered = state.rows.filter(r => matchesFilter(r, viewType, fText, fMark));
+    const sorted = sortRows(filtered, sMode);
+
+    const tbody = $("tbody");
+    tbody.innerHTML = "";
+
+    for (const row of sorted) {
+      const tr = document.createElement("tr");
+      if (conflictIds.has(row.id) && row.mark === "fav") tr.className = "conflictRow";
+
+      const tdMark = document.createElement("td");
+      tdMark.className = "col-mark";
+      tdMark.innerHTML =
+        row.mark === "fav" ? `<span class="badge fav">Fav</span>` :
+        row.mark === "dud" ? `<span class="badge dud">Dud</span>` :
+        `<span class="badge">(unmarked)</span>`;
+      tr.appendChild(tdMark);
+
+      const tdW = document.createElement("td");
+      tdW.className = "col-weapon";
+      tdW.textContent = row.weapon;
+      tr.appendChild(tdW);
+
+      const tdE = document.createElement("td");
+      tdE.className = "col-element";
+      tdE.textContent = row.element;
+      tr.appendChild(tdE);
+
+      const tdR = document.createElement("td");
+      tdR.className = "col-roll";
+      tdR.innerHTML = `<span class="mono">#${row.roll}</span>`;
+      tr.appendChild(tdR);
+
+      const tdD = document.createElement("td");
+      if (row.mark === "dud") {
+        tdD.innerHTML = `<div class="tiny">No skills recorded</div>`;
+      } else if (row.type === "skills") {
+        tdD.innerHTML = `
+          <div><span class="tiny">Set:</span> ${escapeHtml(row.setBonus || "-")}</div>
+          <div><span class="tiny">Group:</span> ${escapeHtml(row.groupSkill || "-")}</div>
+        `;
+      } else {
+        const list = (row.reinforcements || []);
+        tdD.innerHTML = list.length
+          ? list.map((v,i) => `<div><span class="tiny">${i+1}:</span> ${escapeHtml(v)}</div>`).join("")
+          : `<div>-</div>`;
+      }
+      tr.appendChild(tdD);
+
+      const tdA = document.createElement("td");
+      tdA.className = "col-actions right";
+      tdA.innerHTML = `<button class="primary" data-act="edit" data-id="${row.id}">Edit</button>`;
+      tr.appendChild(tdA);
+
+      tbody.appendChild(tr);
+    }
+
+    const plan = buildOptimizePlan(state, viewType, $("optRange").value);
+    if (plan.maxRoll <= 0) {
+      $("optSummary").textContent = "Mark some rolls as Fav to generate a plan.";
+    } else {
+      const conflictsTxt = plan.conflicts ? ` • Conflicts: ${plan.conflicts}` : "";
+      $("optSummary").textContent = `Targets (Fav): ${plan.favCount} • Plan length: ${plan.maxRoll}${conflictsTxt}`;
+    }
+
+    updateAddButtonState();
+  }
+
+  function renderOptimize() {
+    const state = loadState();
+    const type = $("rollType").value;
+    const plan = buildOptimizePlan(state, type, $("optRange").value);
+
+    const out = $("optOut");
+    out.innerHTML = "";
+
+    if (plan.maxRoll <= 0) {
+      out.style.display = "none";
+      $("optSummary").textContent = "No plan yet — mark some rolls as Fav first.";
+      return;
+    }
+
+    out.style.display = "";
+    const seedName = (type === "skills") ? "Skills seed" : "Reinf seed";
+    const conflictNoun = plan.conflicts === 1 ? "conflict" : "conflicts";
+
+    $("optSummary").textContent =
+      `${seedName}: Targets (Fav) ${plan.favCount} • Plan length ${plan.maxRoll}` +
+      (plan.conflicts ? ` • ${plan.conflicts} ${conflictNoun} (choose one when it happens)` : "");
+
+    for (const line of plan.lines) {
+      const div = document.createElement("div");
+      div.className = "line" + (line.conflict ? " conflict" : "");
+
+      const rollLabel = line.start === line.end
+        ? `Roll ${line.start}`
+        : `Roll ${line.start}–${line.end}`;
+
+      if (line.kind === "dud") {
+        div.innerHTML = `
+          <div class="left">
+            <div class="rollN">${rollLabel}</div>
+            <div class="desc">
+              <span class="badge dud">Dud</span> Dud
+              <span class="tiny">Burn these rolls anywhere — you’re just advancing the seed.</span>
+            </div>
+          </div>
+        `;
+      } else {
+        const conflictWarn = line.conflict
+          ? `<span class="badge" style="border-color: rgba(231,76,60,.55); background: rgba(231,76,60,.10); color:#ffd0cb;">Conflict</span>`
+          : `<span class="badge fav">Fav</span>`;
+
+        const items = line.favs.map(r => `<li>${escapeHtml(describeRow(r))}</li>`).join("");
+        const sub = line.conflict
+          ? `<span class="tiny">Two+ favs land on the same roll. You must pick one.</span>`
+          : `<span class="tiny">Land here on this roll to take the target.</span>`;
+
+        div.innerHTML = `
+          <div class="left">
+            <div class="rollN">${rollLabel}</div>
+            <div class="desc">
+              ${conflictWarn}
+              <ul>${items}</ul>
+              ${sub}
+            </div>
+          </div>
+        `;
+      }
+      out.appendChild(div);
+    }
+
+    out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function resetAllForCurrentView() {
+    const type = $("rollType").value;
+    const label = (type === "skills") ? "Weapon Skills" : "Reinforcements";
+    const ok = confirm(`Clear ALL ${label} rolls for this session? This cannot be undone.`);
+    if (!ok) return;
+
+    const state = loadState();
+    state.rows = state.rows.filter(r => r.type !== type);
+    rebuildCounters(state);
+    saveState(state);
+
+    editingId = null;
+    $("rollType").disabled = false;
+    $("weapon").disabled = false;
+    $("element").disabled = false;
+    $("cancelEditBtn").style.display = "none";
+    $("addRollBtn").textContent = "+ Add roll";
+    $("editBanner").style.display = "none";
+
+    resetInputs();
+    syncViewUI($("rollType").value);
+    render();
+  }
+
+  // ⚡ One tap = one dud roll recorded. Skips the Fav/Dud selector AND Add Roll.
+  // Uses the same nextRollNumber() counter as Add Roll, so numbering stays in sync.
+  // Does NOT touch the form fields, so any half-filled Fav input survives.
+  function quickAddDud() {
+    const type = $("rollType").value;
+    const weapon = $("weapon").value;
+    const element = $("element").value;
+
+    const state = loadState();
+    const roll = nextRollNumber(state, type, weapon, element);
+
+    const row = {
+      id: nowId(),
+      createdAt: Date.now(),
+      type, weapon, element, roll,
+      mark: "dud",
+      setBonus: "",
+      groupSkill: "",
+      reinforcements: []
+    };
+
+    state.rows.push(row);
+    saveState(state);
+    render();
+
+    // Flash feedback so you know it landed without reading the table
+    const btn = $("quickDudBtn");
+    btn.textContent = `✓ Dud #${roll} added`;
+    setTimeout(() => { btn.textContent = "⚡ QUICK DUD"; }, 600);
+  }
+
+  function wireEvents() {
+    $("rollType").addEventListener("change", () => {
+      const t = $("rollType").value;
+      $("skillsFields").style.display = (t === "skills") ? "" : "none";
+      $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+      syncViewUI(t);
+      render();
+    });
+
+    ["weapon","element","filterText","filterMark","sortMode","optRange"].forEach(id => {
+      $(id).addEventListener("input", render);
+      $(id).addEventListener("change", render);
+    });
+
+    ["setBonus","groupSkill","reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+      $(id).addEventListener("input", updateAddButtonState);
+      $(id).addEventListener("change", updateAddButtonState);
+    });
+
+    ["markFav","markDud"].forEach(id => {
+      $(id).addEventListener("change", () => {
+        syncMarkUI();
+        updateAddButtonState();
+      });
+    });
+
+    // ⚡ Quick Dud wiring
+    $("quickDudBtn").addEventListener("click", quickAddDud);
+
+    $("addRollBtn").addEventListener("click", () => {
+      const v = validateInputs();
+      if (!v.ok) { updateAddButtonState(); return; }
+
+      const state = loadState();
+      const mark = getMark();
+
+      if (editingId) {
+        const idx = state.rows.findIndex(r => r.id === editingId);
+        if (idx === -1) { setEditingMode(false); render(); return; }
+
+        const row = state.rows[idx];
+        row.mark = mark;
+
+        if (mark === "dud") {
+          row.setBonus = "";
+          row.groupSkill = "";
+          row.reinforcements = [];
+        } else if (row.type === "skills") {
+          row.setBonus = $("setBonus").value;
+          row.groupSkill = $("groupSkill").value;
+          row.reinforcements = [];
+        } else {
+          row.reinforcements = getReinf().slice();
+          row.setBonus = "";
+          row.groupSkill = "";
+        }
+
+        rebuildCounters(state);
+        saveState(state);
+
+        setEditingMode(false);
+        resetInputs();
+        render();
+        return;
+      }
+
+      const type = $("rollType").value;
+      const weapon = $("weapon").value;
+      const element = $("element").value;
+      const roll = nextRollNumber(state, type, weapon, element);
+
+      const row = {
+        id: nowId(),
+        createdAt: Date.now(),
+        type, weapon, element, roll,
+        mark
+      };
+
+      if (mark === "dud") {
+        row.setBonus = "";
+        row.groupSkill = "";
+        row.reinforcements = [];
+      } else if (type === "skills") {
+        row.setBonus = $("setBonus").value;
+        row.groupSkill = $("groupSkill").value;
+        row.reinforcements = [];
+      } else {
+        row.reinforcements = getReinf().slice();
+        row.setBonus = "";
+        row.groupSkill = "";
+      }
+
+      state.rows.push(row);
+      saveState(state);
+
+      resetInputs();
+      render();
+    });
+
+    $("cancelEditBtn").addEventListener("click", () => {
+      setEditingMode(false);
+      resetInputs();
+      render();
+    });
+
+    $("tbody").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-act='edit']");
+      if (!btn) return;
+      const id = btn.getAttribute("data-id");
+      if (!id) return;
+
+      const state = loadState();
+      const row = state.rows.find(r => r.id === id);
+      if (!row) return;
+
+      populateFormFromRow(row);
+      setEditingMode(true, row);
+      render();
+    });
+
+    $("optBtn").addEventListener("click", renderOptimize);
+    $("optClearBtn").addEventListener("click", resetAllForCurrentView);
+
+    $("exportBtn").addEventListener("click", () => {
+      const state = loadState();
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+      download(`gog-tracker-${stamp}.json`, JSON.stringify(state, null, 2));
+    });
+
+    $("importBtn").addEventListener("click", async () => {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = "application/json,.json";
+      inp.onchange = async () => {
+        const file = inp.files && inp.files[0];
+        if (!file) return;
+        try{
+          const txt = await readFileAsText(file);
+          const parsed = JSON.parse(txt);
+          if (!parsed.rows) throw new Error("Invalid file format");
+
+          for (const r of parsed.rows) {
+            if (r.mark !== "fav" && r.mark !== "dud") r.mark = "";
+            if (!Array.isArray(r.reinforcements)) r.reinforcements = [];
+          }
+          parsed.counters = parsed.counters || {};
+          rebuildCounters(parsed);
+
+          sessionStorage.setItem(KEY, JSON.stringify(parsed));
+
+          setEditingMode(false);
+          resetInputs();
+          syncViewUI($("rollType").value);
+          render();
+        } catch(err) {
+          alert("Import failed: " + (err && err.message ? err.message : "unknown error"));
+        }
+      };
+      inp.click();
+    });
+  }
+
+  function init() {
+    makeOptions($("weapon"), WEAPONS_SORTED, null);
+    makeOptions($("element"), ELEMENTS_SORTED, null);
+    makeOptions($("setBonus"), SET_BONUS_SORTED, "Select set bonus...");
+    makeOptions($("groupSkill"), GROUP_SKILLS_SORTED, "Select group skill...");
+    ["reinforcement1","reinforcement2","reinforcement3","reinforcement4","reinforcement5"].forEach(id => {
+      makeOptions($(id), REINFORCEMENTS_SORTED, "Select reinforcement...");
+    });
+
+    $("sessionPill").textContent = `Session: ${nowId().slice(0,8)}`;
+    $("sortMode").value = "oldest";
+
+    const t = $("rollType").value;
+    $("skillsFields").style.display = (t === "skills") ? "" : "none";
+    $("reinforceFields").style.display = (t === "reinforce") ? "" : "none";
+    syncViewUI(t);
+
+    wireEvents();
+    syncMarkUI();
+    updateAddButtonState();
+    render();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
